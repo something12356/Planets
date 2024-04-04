@@ -64,7 +64,7 @@ class planet:
 # earth = planet(5,np.array([0.3,0.0]),1,np.array([960.0,50.0]),(0,0,255))
 # planets = [sun1,sun2,earth]
 
-sun = planet(20,np.array([1.0,-1.0]),1000000,np.array([960.0,540.0]),(255,255,0))
+sun = planet(20,np.array([0.0,0.0]),1000000,np.array([960.0,540.0]),(255,255,0))
 venus = planet(7,np.array([-2.0,1.0]),1,np.array([1200.0,910.1]),(139,115,85))
 earth = planet(7,np.array([4.0,-1.0]),1,np.array([960.0,270.0]),(0,0,255))
 # moon = planet(5,np.array([2.8690832,-0.03653574]),0.012,np.array([955.0,270]),"grey")
@@ -112,6 +112,17 @@ while running:
         line[0] += focusDisplacement
         line[1] += focusDisplacement
 
+    index = 0
+    for line in linesToDraw:
+        ## Index ratio is used to reduce opacity and thickness of the older lines 
+        ## An index counter is used as python cannot find the index of np arrays with multiple elements
+        indexRatio = index/len(linesToDraw)
+        pygame.draw.aaline(screen,([indexRatio*line[2][i] for i in range(3)]),line[0],line[1],indexRatio*255)
+        index+=1
+    ## Gets rid of excess lines, prevents them from becoming too long
+    if len(linesToDraw) > LINE_LENGTH:
+        linesToDraw = linesToDraw[len(linesToDraw)-LINE_LENGTH:]
+
     ## Works out gravitational force between all planets and moves them according each tick
     for p1 in planets:
         F = 0
@@ -127,17 +138,6 @@ while running:
         linesToDraw.append([beforePos,afterPos,p1.colour])
         pygame.draw.circle(screen,p1.colour,p1.pos,p1.size)
         pygame.draw.aaline(screen,(p1.colour),p1.pos,p1.pos)
-
-    index = 0
-    for line in linesToDraw:
-        ## Index ratio is used to reduce opacity and thickness of the older lines 
-        ## An index counter is used as python cannot find the index of np arrays with multiple elements
-        indexRatio = index/len(linesToDraw)
-        pygame.draw.aaline(screen,([indexRatio*line[2][i] for i in range(3)]),line[0],line[1],indexRatio*255)
-        index+=1
-    ## Gets rid of excess lines, prevents them from becoming too long
-    if len(linesToDraw) > LINE_LENGTH:
-        linesToDraw = linesToDraw[len(linesToDraw)-LINE_LENGTH:]
 
     pygame.display.flip()
     clock.tick(60)
