@@ -32,6 +32,8 @@
 - [x] Orbit line not drawn inside of planet
 	- [x] Simplest way might just be layers rather than checking if the line is in the planet? Just draw the planets on top of the lines.
 - [x] Lines showing *actual* orbit, ignoring c.o.m. shifting
+- [ ] Lines showing forces, optional, can toggle
+- [ ] Hash table for the planets and accessing them!
 - [ ] Utility program to calculate optimal orbit dist / speed and things
 - [ ] Satellites
 	- Could inherit velocity and position from planet? Some form of inheritance would be very good for marks.
