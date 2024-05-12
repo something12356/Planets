@@ -5,6 +5,7 @@
 - [x] Button to switch focus. I.e. comDisplacement becomes focusDisplacement.
 - [ ] Optimisation, e.g. not drawing things that are off-screen.
 	- Check with **size** so that you don't delete stuff the moment its centre is off-screen, only when the entire sprite is off-screen.
+- [ ] Add support for varying screen sizes.
 - [ ] Planet choices but also *presets*
 	- [ ] CONFIG FILE!
 	- [ ] More constants for configurable things
@@ -16,6 +17,7 @@
 		- More metres per pixel basically
 		- Display on log scale? Could make the system actually look good while still being accurate.
 		- Or be able to zoom out without the planet size changing quite as much?
+		- **See reddit thing sent in Connor DMs**
 	- [ ] Change origin to be in more sensible location, either bottom left or centre of screen
 - [ ] Change everything to be with sprites (same for collisions program, can then use sprite collision detection!)
 - [ ] *COLLISIONS*
@@ -39,7 +41,7 @@
 	- [ ] If too difficult then could stick to same 2d graphics but make 3d and *project* it?
 	- [ ]  ^^ if doing this then make objects smaller the further they are from plane? To simulate distance? And also hide them if they're behind another object.
 	- Check pinned message in Ozz's DMs on perspective scaling
-- [ ] NASA database querying, add objects? Could have presets for solar system, or earth at centre with the NEOs, Saturn and its rings + moons, etc. Would need to optimise line drawing for lots of objects though.
+- [ ] NASA JPL Horizon Systems querying, add objects? Could have presets for solar system, or earth at centre with the NEOs, Saturn and its rings + moons, etc. Would need to optimise line drawing for lots of objects though.
 	- [ ] Add info to them? Lean into the educational aspect and display info when clicking on objects and stuff.
 	- [ ] Check with Dr Turnbull about this!
 	- [ ] Could integrate a *lot* of cool database-y stuff for this!
