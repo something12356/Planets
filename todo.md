@@ -1,6 +1,6 @@
 - [x] GITHUB
 - [ ] Ask sir if need encapsulation
-- [ ] Optimisation for gravity to skip planets already been checked, so the for loop should be size n, size n-1 etc down to size 0, should apply the opposite force each time gravity is calculated to a planet.
+- [ ] Polymorphism with celestial body class, asteroid, planet and sun inherit. Asteroids should receive less simulation time because they *will* lag it otherwise lmao.
 - [ ] Try including composition / aggregation somewhere? Idk how it'd work, maybe when launching rockets or something they could be created by the planet they're launched from.
 - [ ] x=0,y=1 indexing? To make coordinates make more sense. Or X Y.
 - [x] Button to switch focus. I.e. comDisplacement becomes focusDisplacement.

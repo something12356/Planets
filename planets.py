@@ -38,6 +38,8 @@ class planet:
         self.mass = mass
         self.pos = pos
         self.colour = colour
+        self.checked = False
+        self.force = 0
     
     ## Uses F = GMm/r**2 to work out the force on a planet
     ## Breaks it into components by doing F*adj/hyp, F*opp/hyp (Fcos(a) and Fsin(a))
@@ -49,8 +51,8 @@ class planet:
         return np.array([Fx,Fy])
     
     ## Uses F = ma to find acceleration, add to velocity
-    def secondLaw(self, F):
-        self.velocity += T*F/self.mass
+    def secondLaw(self):
+        self.velocity += T*self.force/self.mass
     
     ## Add velocity to position to make it move
     def move(self):
@@ -125,12 +127,11 @@ while running:
 
     ## Works out gravitational force between all planets and moves them according each tick
     for p1 in planets:
-        F = 0
-        for p2 in planets:
-            if p1 == p2:
-                continue
-            F += p1.gravity(p2)
-        p1.secondLaw(F)
+        for p2 in planets[planets.index(p1)+1:]:
+            p1.force += p1.gravity(p2)
+            p2.force += p2.gravity(p1)
+        print(p1.force)
+        p1.secondLaw()
         ## Takes position before and after so that the lines for the orbits can be drawn
         beforePos = np.copy(p1.pos)
         p1.move()
@@ -138,6 +139,7 @@ while running:
         linesToDraw.append([beforePos,afterPos,p1.colour])
         pygame.draw.circle(screen,p1.colour,p1.pos,p1.size)
         pygame.draw.aaline(screen,(p1.colour),p1.pos,p1.pos)
+        p1.force = 0
 
     pygame.display.flip()
     clock.tick(60)
