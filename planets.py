@@ -1,5 +1,5 @@
 import math as maths
-import pygame_sdl2 as pygame
+import pygame
 import numpy as np
 
 ## Time-scale, how much velocity and position should change per tick
@@ -117,7 +117,7 @@ while running:
         ## Index ratio is used to reduce opacity and thickness of the older lines 
         ## An index counter is used as python cannot find the index of np arrays with multiple elements
         indexRatio = index/len(linesToDraw)
-        pygame.draw.aaline(screen,([indexRatio*line[2][i] for i in range(3)]),line[0],line[1],indexRatio*255)
+        pygame.draw.aaline(screen,([int(indexRatio*line[2][i]) for i in range(3)]),line[0],line[1],int(indexRatio*255))
         index+=1
     ## Gets rid of excess lines, prevents them from becoming too long
     if len(linesToDraw) > LINE_LENGTH:
