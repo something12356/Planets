@@ -56,7 +56,7 @@ class ball:
         self.vel[x], ball2.vel[x] = (m1*a-m2*a+2*m2*c)/(m1+m2), (m2*c-m1*c+2*m1*a)/(m1+m2)
         self.vel[y], ball2.vel[y] = (m1*b-m2*b+2*m2*d)/(m1+m2), (m2*d-m1*d+2*m1*b)/(m1+m2)
 
-balls = [ball(np.array([960,540]),np.array([random.choice([0,0])*random.uniform(5000,10000),random.choice([0,0])*random.uniform(5000,10000)]),random.uniform(20,50),(random.randint(0,255),random.randint(0,255),random.randint(0,255))) for i in range(50)]
+balls = [ball(np.array([960.0,540.0]),np.array([random.choice([-0.001,0.001])*random.uniform(5000.0,10000.0),random.choice([-0.001,0.001])*random.uniform(5000.0,10000.0)]),random.uniform(20,50),(random.randint(0,255),random.randint(0,255),random.randint(0,255))) for i in range(50)]
 balls.append(ball(np.array([20.0,540.0]),np.array([0.0,0.0]),50,"blue"))
 
 pygame.init()
@@ -104,6 +104,7 @@ while True:
         energy += 0.5*ball.size*(mag(ball.vel)**2)
         if mag(ball.vel) != 0:
             print(mag(ball.vel))
+        ball.vel += 0.001*ball.vel
     print("Total kinetic energy:",energy)
     count += 1
     if count == 200:
