@@ -21,6 +21,31 @@ def mag(vec):
         mag += i**2
     return maths.sqrt(mag)
 
+## Returns a vector with the same direction as the input of length 1
+def unit(vec):
+    if mag(vec) == 0:
+        return vec
+    return vec*(1/mag(vec))
+
+## Returns a direction vector (a vector of unit length 1 so it can easily be scaled) that is perpendicular to input line
+## By taking the "negative reciprocal", swapping the values and multiplying one of them by -1
+def normal(vector):
+    normal = np.array([-1*vector[1],vector[0]])
+    return unit(normal)
+
+## Draws an arrow by drawing a line, picking two points either side of that line, and drawing lines from the end of the first line to those two points
+def drawArrow(colour, startPos, endPos):
+    vec = endPos - startPos
+    length = mag(vec)
+    pygame.draw.aaline(screen, colour, startPos, endPos)
+
+## Generating the two points either side of the line
+    norm = normal(vec)
+    p1 = startPos + 0.9*vec + 0.25*length*norm
+    p2 = startPos + 0.9*vec - 0.25*length*norm
+    pygame.draw.aaline(screen, colour, p1, endPos)
+    pygame.draw.aaline(screen, colour, p2, endPos)
+
 ## Finds the centre of mass of the sysetm
 def com(planets):
     com = np.array([0.0,0.0])
@@ -129,7 +154,12 @@ while running:
     for p1 in planets:
         for p2 in planets[planets.index(p1)+1:]:
             p1.force += p1.gravity(p2)
+            ## Draws force arrows showing the forces acting on the planet
+            if planets.index(p1) == focus and not comFocus:
+                drawArrow("white", p1.pos, p1.pos+p1.gravity(p2))
             p2.force += p2.gravity(p1)
+        if planets.index(p1) == focus and not comFocus:
+            drawArrow(p1.colour, p1.pos, p1.pos + p1.force)
         print(p1.force)
         p1.secondLaw()
         ## Takes position before and after so that the lines for the orbits can be drawn
