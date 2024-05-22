@@ -96,7 +96,7 @@ venus = planet(7,np.array([-2.0,1.0]),1,np.array([1200.0,910.1]),(139,115,85))
 earth = planet(7,np.array([4.0,-1.0]),1,np.array([960.0,270.0]),(0,0,255))
 # moon = planet(5,np.array([2.8690832,-0.03653574]),0.012,np.array([955.0,270]),"grey")
 jupiter = planet(10,np.array([0.0,2.0]),333,np.array([500.0,540.0]),(210,105,30))
-planets = [sun,venus,earth,jupiter]
+planets = [sun,venus, earth, jupiter]
 
 pygame.init()
 screen = pygame.display.set_mode((1920,1080))
@@ -104,6 +104,7 @@ clock = pygame.time.Clock()
 running = True
 count = 0
 linesToDraw = []
+arrowsToDraw
 focus = 0
 comFocus = True
 
@@ -154,15 +155,18 @@ while running:
     for p1 in planets:
         for p2 in planets[planets.index(p1)+1:]:
             p1p2gravity = p1.gravity(p2)
+            strength = mag(p1p2gravity)
             p1.force += p1p2gravity
+            print(p1.colour, p2.colour, p1p2gravity)
             ## Draws force arrows showing the forces acting on the planet
             if planets.index(p1) == focus and not comFocus:
-                drawArrow("white", p1.pos, p1.pos + 0.2*mag(p1p2gravity)/(mag(p1p2gravity)+1)*p1p2gravity + 20*unit(p1p2gravity))
+                drawArrow("white", p1.pos, p1.pos + p1p2gravity + 20*unit(p1p2gravity))
+            if planets.index(p2) == focus and not comFocus:
+                drawArrow("white", p2.pos, p2.pos - p1p2gravity - 20*unit(p1p2gravity))
             ## Can take away here due to Newton's third law, each force has equal and opposite reaction force
             p2.force -= p1p2gravity
         if planets.index(p1) == focus and not comFocus:
-            drawArrow(p1.colour, p1.pos, p1.pos + 0.2*mag(p1p2gravity)/(mag(p1.force)+1)*p1.force + 50*unit(p1.force))
-        print(p1.force)
+            drawArrow(p1.colour, p1.pos, p1.pos + p1.force + 50*unit(p1.force))
         p1.secondLaw()
         ## Takes position before and after so that the lines for the orbits can be drawn
         beforePos = np.copy(p1.pos)
