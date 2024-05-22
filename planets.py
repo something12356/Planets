@@ -41,8 +41,8 @@ def drawArrow(colour, startPos, endPos):
 
 ## Generating the two points either side of the line
     norm = normal(vec)
-    p1 = startPos + 0.9*vec + 0.25*length*norm
-    p2 = startPos + 0.9*vec - 0.25*length*norm
+    p1 = startPos + 0.8*vec + 0.15*length*norm
+    p2 = startPos + 0.8*vec - 0.15*length*norm
     pygame.draw.aaline(screen, colour, p1, endPos)
     pygame.draw.aaline(screen, colour, p2, endPos)
 
@@ -153,13 +153,15 @@ while running:
     ## Works out gravitational force between all planets and moves them according each tick
     for p1 in planets:
         for p2 in planets[planets.index(p1)+1:]:
-            p1.force += p1.gravity(p2)
+            p1p2gravity = p1.gravity(p2)
+            p1.force += p1p2gravity
             ## Draws force arrows showing the forces acting on the planet
             if planets.index(p1) == focus and not comFocus:
-                drawArrow("white", p1.pos, p1.pos+p1.gravity(p2))
-            p2.force += p2.gravity(p1)
+                drawArrow("white", p1.pos, p1.pos + 0.2*mag(p1p2gravity)/(mag(p1p2gravity)+1)*p1p2gravity + 20*unit(p1p2gravity))
+            ## Can take away here due to Newton's third law, each force has equal and opposite reaction force
+            p2.force -= p1p2gravity
         if planets.index(p1) == focus and not comFocus:
-            drawArrow(p1.colour, p1.pos, p1.pos + p1.force)
+            drawArrow(p1.colour, p1.pos, p1.pos + 0.2*mag(p1p2gravity)/(mag(p1.force)+1)*p1.force + 50*unit(p1.force))
         print(p1.force)
         p1.secondLaw()
         ## Takes position before and after so that the lines for the orbits can be drawn
