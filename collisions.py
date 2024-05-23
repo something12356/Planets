@@ -56,7 +56,7 @@ class ball:
         self.vel[x], ball2.vel[x] = (m1*a-m2*a+2*m2*c)/(m1+m2), (m2*c-m1*c+2*m1*a)/(m1+m2)
         self.vel[y], ball2.vel[y] = (m1*b-m2*b+2*m2*d)/(m1+m2), (m2*d-m1*d+2*m1*b)/(m1+m2)
 
-balls = [ball(np.array([960.0,540.0]),np.array([random.choice([-0.000000001,0.0000000001])*random.uniform(5000.0,10000.0),random.choice([-0.000000001,0.000000001])*random.uniform(5000.0,10000.0)]),random.uniform(10,20),(random.randint(0,255),random.randint(0,255),random.randint(0,255))) for i in range(400)]
+balls = [ball(np.array([960.0,540.0]),np.array([random.choice([-0.000000001,0.0000000001])*random.uniform(5000.0,10000.0),random.choice([-0.000000001,0.000000001])*random.uniform(5000.0,10000.0)]),random.uniform(10,20),(random.randint(0,255),random.randint(0,255),random.randint(0,255))) for i in range(150)]
 balls.append(ball(np.array([20.0,540.0]),np.array([0.0,0.0]),50,"blue"))
 
 pygame.init()
