@@ -38,8 +38,7 @@ def drawArrow(colour, startPos, endPos):
     vec = endPos - startPos
     length = mag(vec)
     pygame.draw.aaline(screen, colour, startPos, endPos)
-
-## Generating the two points either side of the line
+    ## Generating the two points either side of the line
     norm = normal(vec)
     p1 = startPos + 0.8*vec + 0.15*length*norm
     p2 = startPos + 0.8*vec - 0.15*length*norm
@@ -92,10 +91,10 @@ class planet:
 # planets = [sun1,sun2,earth]
 
 sun = planet(20,np.array([1.0,0.0]),1000000,np.array([960.0,540.0]),(255,255,0))
-venus = planet(7,np.array([-2.0,1.0]),1,np.array([1200.0,910.1]),(139,115,85))
-earth = planet(7,np.array([4.0,-1.0]),1,np.array([960.0,270.0]),(0,0,255))
+venus = planet(7,np.array([-4.0,-1.0]),1,np.array([1200.0,910.1]),(139,115,85))
+earth = planet(7,np.array([4.0,-2.0]),1,np.array([960.0,270.0]),(0,0,255))
 # moon = planet(5,np.array([2.8690832,-0.03653574]),0.012,np.array([955.0,270]),"grey")
-jupiter = planet(10,np.array([0.0,2.0]),333,np.array([500.0,540.0]),(210,105,30))
+jupiter = planet(10,np.array([0.0,4.0]),333000,np.array([500.0,540.0]),(210,105,30))
 planets = [sun,venus, earth, jupiter]
 
 pygame.init()
@@ -130,7 +129,31 @@ while running:
             if event.key == pygame.K_f:
                 arrows = not arrows
 
-    ## Makes it so that the screen follows whichever planet the user wants to look at
+    ## Works out gravitational force between all planets and moves them according each tick
+    for p1 in planets:
+        for p2 in planets[planets.index(p1)+1:]:
+            p1p2gravity = p1.gravity(p2)
+            strength = mag(p1p2gravity)
+            p1.force += p1p2gravity
+            ## Draws force arrows showing the forces acting on the planet
+            if planets.index(p1) == focus and not comFocus:
+                arrowsToDraw.append(["white", p1.pos, np.copy(p1p2gravity), p1.size])
+            if planets.index(p2) == focus and not comFocus:
+                arrowsToDraw.append(["white", p2.pos, -1*np.copy(p1p2gravity), p1.size])
+            ## Can take away here due to Newton's third law, each force has equal and opposite reaction force
+            p2.force -= p1p2gravity
+        if planets.index(p1) == focus and not comFocus:
+            arrowsToDraw.append([p1.colour, p1.pos, np.copy(p1.force), p1.size])
+            arrowsToDraw.append(np.copy(p1.force))
+        p1.secondLaw()
+        ## Takes position before and after so that the lines for the orbits can be drawn
+        beforePos = np.copy(p1.pos)
+        p1.move()
+        afterPos = np.copy(p1.pos)
+        linesToDraw.append([beforePos,afterPos,p1.colour])
+        p1.force = 0
+
+        ## Makes it so that the screen follows whichever planet the user wants to look at
     ## Alternatively follows the centre of mass, useful for binary star systems
     if comFocus:
         focusDisplacement = centre - com(planets)
@@ -155,39 +178,22 @@ while running:
 
     if not arrows:
         arrowsToDraw = []
-    while len(arrowsToDraw) > 0:
-        arrow = arrowsToDraw.pop()
-        print(unit(arrow[2]))
-        force = arrow[3]
-        scalar = 40
+    else:
+        force = arrowsToDraw[-1]
+    while len(arrowsToDraw) > 1:
+        arrow = arrowsToDraw.pop(0)
         if arrow[0] != "white":
-            scalar = 80
-        drawArrow(arrow[0], arrow[1], arrow[1]+scalar*mag(arrow[2])/mag(force)*unit(arrow[2])+(scalar/2)*unit(arrow[2]))
+            print("RESULTANT:", maths.log(mag(arrow[2])+1,1000),"VECTOR:",arrow[2])
+            drawArrow(arrow[0], arrow[1], arrow[1]+maths.log(mag(force)+1,1000)*240*mag(arrow[2])/mag(force)*unit(arrow[2])+2*arrow[3]*unit(arrow[2]))
+        else:
+            print("COMPONENT:", maths.log(mag(arrow[2])+1,1000),"VECTOR:",arrow[2])
+            drawArrow(arrow[0], arrow[1], arrow[1]+maths.log(mag(force)+1,1000)*60*mag(arrow[2])/mag(force)*unit(arrow[2])+2*arrow[3]*unit(arrow[2]))
+    arrowsToDraw = []
 
-    ## Works out gravitational force between all planets and moves them according each tick
-    for p1 in planets:
-        for p2 in planets[planets.index(p1)+1:]:
-            p1p2gravity = p1.gravity(p2)
-            strength = mag(p1p2gravity)
-            p1.force += p1p2gravity
-            ## Draws force arrows showing the forces acting on the planet
-            if planets.index(p1) == focus and not comFocus:
-                arrowsToDraw.append(["white", p1.pos, np.copy(p1p2gravity), np.copy(p1.force)])
-            if planets.index(p2) == focus and not comFocus:
-                arrowsToDraw.append(["white", p2.pos, -1*np.copy(p1p2gravity), np.copy(p1.force)])
-            ## Can take away here due to Newton's third law, each force has equal and opposite reaction force
-            p2.force -= p1p2gravity
-        if planets.index(p1) == focus and not comFocus:
-            arrowsToDraw.append([p1.colour, p1.pos, np.copy(p1.force), np.copy(p1.force)])
-        p1.secondLaw()
-        ## Takes position before and after so that the lines for the orbits can be drawn
-        beforePos = np.copy(p1.pos)
-        p1.move()
-        afterPos = np.copy(p1.pos)
-        linesToDraw.append([beforePos,afterPos,p1.colour])
-        pygame.draw.circle(screen,p1.colour,p1.pos,p1.size)
-        pygame.draw.aaline(screen,(p1.colour),p1.pos,p1.pos)
-        p1.force = 0
+    ## Draws all the planets
+    for p in planets:       
+        pygame.draw.circle(screen,p.colour,p.pos,p.size)
+        pygame.draw.aaline(screen,(p.colour),p.pos,p.pos)
 
     pygame.display.flip()
     clock.tick(60)
