@@ -1,0 +1,4 @@
+flask for web stuff
+^^ earth seasons, satellite orbits, need 3d + basic lighting for seasons, might be a bit tricky, figure out
+^^ do analysis and design first
+^^ **VERLET INTEGRATION LOOKS PROMISING, KIND OF WHAT YOU'RE ALREADY DOING? CAN ALSO HELP OPTIMISE COLLISIONS!!** LOOK AT PEZZZA AND OTHER RESOURCES!
