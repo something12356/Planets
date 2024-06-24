@@ -4,7 +4,7 @@ import numpy as np
 import math as maths
 
 SIZE = [1920, 1080]
-T = 0.1
+T = 0.01
 
 x = 0
 y = 1
@@ -19,6 +19,20 @@ def unit(vec):
     if mag(vec) == 0:
         return vec
     return vec*(1/mag(vec))
+
+def dot(vec1, vec2):
+    if len(vec1) != len(vec2):
+        return "Dimension error!"
+    else:
+        return sum([vec1[i]*vec2[i] for i in range(len(vec1))])
+
+def addToCells(cells, balls):
+    cells = [[] for i in range(5184)]
+    for ball in balls:
+        i = round(ball.pos[x])//20-1
+        j = round(ball.pos[y])//20-1
+        cells[j*96+i].append(ball)
+    return cells
 
 class ball:
     def __init__(self,pos,vel,size,colour):
@@ -38,10 +52,10 @@ class ball:
                 newPos += unit(self.vel)
             self.pos = newPos
 
-    def reflect(self):
+    def reflect(self, e=1):
         for i in range(2):
             if self.pos[i] <= self.size or self.pos[i] >= SIZE[i] - self.size:
-                self.vel[i] = -self.vel[i]
+                self.vel[i] = -e*self.vel[i]
 
                 if self.pos[i] < self.size:
                     self.pos[i] = self.size
@@ -49,15 +63,22 @@ class ball:
                 if self.pos[i] > SIZE[i] - self.size:
                     self.pos[i] = SIZE[i] - self.size
 
-    
-    def collide(self,ball2):
+    def collide(self, ball2, e=1):
+        n = unit(ball2.pos-self.pos)
+        dot1 = dot(self.vel, n)
+        dot2 = dot(ball2.vel, n)
+        tan1,norm1, tan2,norm2 = self.vel - dot1*n,dot1, ball2.vel-dot2*n,dot2
         m1, m2 = self.size, ball2.size
-        a,b, c,d = self.vel[x],self.vel[y], ball2.vel[x],ball2.vel[y]
-        self.vel[x], ball2.vel[x] = (m1*a-m2*a+2*m2*c)/(m1+m2), (m2*c-m1*c+2*m1*a)/(m1+m2)
-        self.vel[y], ball2.vel[y] = (m1*b-m2*b+2*m2*d)/(m1+m2), (m2*d-m1*d+2*m1*b)/(m1+m2)
+        # print(m1*mag(self.vel)**2+m2*mag(ball2.vel)**2)
+        norm1New, norm2New = (norm1*(m1-m2)+2*m2*norm2)/(m1+m2), (norm2*(m2-m1)+2*m1*norm1)/(m1+m2)
+        self.vel = tan1+norm1New*n
+        ball2.vel = tan1+norm2New*n
+        # print(m1*mag(self.vel)**2+m2*mag(ball2.vel)**2)
 
-balls = [ball(np.array([960.0,540.0]),np.array([random.choice([-0.000000001,0.0000000001])*random.uniform(5000.0,10000.0),random.choice([-0.000000001,0.000000001])*random.uniform(5000.0,10000.0)]),random.uniform(10,20),(random.randint(0,255),random.randint(0,255),random.randint(0,255))) for i in range(150)]
-balls.append(ball(np.array([20.0,540.0]),np.array([0.0,0.0]),50,"blue"))
+# balls = [ball(np.array([random.uniform(0.0,1920.0),random.uniform(0.0,1080.0)]),np.array([random.uniform(-5.0,10.0),random.uniform(-5.0,10.0)]),random.uniform(5,20),(random.randint(0,255),random.randint(0,255),random.randint(0,255))) for i in range(1000)]
+# balls.append(ball(np.array([20.0,520.0]),np.array([0.0,0.0]),20,"blue"))
+balls = []
+cells = []
 
 pygame.init()
 screen = pygame.display.set_mode((SIZE[x],SIZE[y]))
@@ -76,39 +97,44 @@ while True:
                 T += 0.01
             if event.key == pygame.K_DOWN:
                 T -= 0.01
+    if count % 3 == 0:
+        a = count % 510
+        if a > 255:
+            a = 510 - a
+        b = 255 - a
+        balls.append(ball(np.array([20.0,20.0]),np.array([30.0,0.0]),10,(a,0,b)))
+    cells = addToCells(cells, balls)
 
-    for ball in balls:
-        pygame.draw.circle(screen,ball.colour,ball.pos,ball.size)
-        ball.move()
-        ball.reflect()
-
-    for ball in balls:
-        for ball2 in balls[balls.index(ball)+1:]:
-            overlap = ball.size+ball2.size - mag(ball.pos-ball2.pos)
-            if ball2 == ball or ball.isColliding or ball2.isColliding:
-                continue
-            
-            if overlap > 0:
-                ball.pos += overlap*unit(ball.pos-ball2.pos)
-                ball2.pos += overlap*unit(ball2.pos-ball.pos)
-                if mag(ball.pos-ball2.pos) == 0:
-                    ball.pos += overlap*np.array([random.uniform(-1,1),random.uniform(-1,1)])
-                    ball2.pos += overlap*np.array([random.uniform(-1,1),random.uniform(-1,1)])
-                ball.collide(ball2)
-                ball.isColliding = True
-                ball2.isColliding = True
+    for i in range(len(cells)):
+        for ball1 in cells[i]:
+            pygame.draw.circle(screen,ball1.colour,ball1.pos,ball1.size)
+            ball1.move()        
+            ball1.reflect(0.1)
+            for j in [-97,-96,-95,-1,0,1,95,96,97]:
+                if i+j > 5183 or i+j < 0:
+                    continue
+                for ball2 in cells[i+j]:
+                    if ball2 == ball1:
+                        continue
+                    overlap = ball1.size+ball2.size - mag(ball1.pos-ball2.pos)
+                    if overlap > 0:
+                        ball1.pos += 0.5*overlap*unit(ball1.pos-ball2.pos)
+                        ball2.pos += 0.5*overlap*unit(ball2.pos-ball1.pos)
+                        if ball1.isColliding or ball2.isColliding:
+                            continue
+                        ball1.collide(ball2, 0.1)
+                        ball1.isColliding = True
+                        ball2.isColliding = True
 
     energy = 0
-    for ball in balls:
-        ball.isColliding = False
-        energy += 0.5*ball.size*(mag(ball.vel)**2)
-        if mag(ball.vel) != 0:
-            print(mag(ball.vel))
+    for ball1 in balls:
+        ball1.vel += np.array([0.0, 6.0])
+        ball1.isColliding = False
+        energy += 0.5*ball1.size*mag(ball1.vel)**2
     print("Total kinetic energy:",energy)
     count += 1
-    if count == 400:
-        balls[-1].vel = np.array([1000.0,1000.0])
-
+    # if count == 50:
+    #     balls[-1].vel = np.array([200.0,0.0])
     print('---')
     pygame.display.flip()
     clock.tick(60)
