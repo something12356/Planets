@@ -42,14 +42,14 @@ class ball:
         self.colour = colour
         self.isColliding = False
 
-    def move(self):
-        newPos = self.pos + T*self.vel
+    def move(self,displacement):
+        newPos = self.pos + displacement
         if newPos[x] >= self.size and newPos[x] <= SIZE[x]-self.size and newPos[y] >= self.size and newPos[y] <= SIZE[y]-self.size:
             self.pos = newPos
         else:
             newPos = self.pos
             while newPos[x] >= self.size and newPos[x] <= SIZE[x]-self.size and newPos[y] >= self.size and newPos[y] <= SIZE[y]-self.size:
-                newPos += unit(self.vel)
+                newPos += unit(displacement)
             self.pos = newPos
 
     def reflect(self, e=1):
@@ -62,6 +62,23 @@ class ball:
 
                 if self.pos[i] > SIZE[i] - self.size:
                     self.pos[i] = SIZE[i] - self.size
+
+    def detectCollisions(self, i):
+        collidesWith = []
+        for j in [-97,-96,-95,-1,0,1,95,96,97]:
+            if i+j > 5183 or i+j < 0:
+                continue
+            for ball2 in cells[i+j]:
+                if self == ball2:
+                    continue
+                overlap = self.size+ball2.size - mag(self.pos-ball2.pos)
+                if overlap > 0:
+                    collidesWith.append([overlap,ball2])
+                    self.isColliding = True
+                    ball2.isColliding = True
+            return collidesWith
+
+
 
     def collide(self, ball2, e=1):
         n = unit(ball2.pos-self.pos)
@@ -112,33 +129,26 @@ while True:
         if c < 0:
             c = 0
         print(a,b,c)
-        balls.append(ball(np.array([20.0,20.0]),np.array([1200.0,0.0]),10,(a,b,c)))
+        balls.append(ball(np.array([20.0,20.0]),np.array([120.0,0.0]),10,(a,b,c)))
 
     cells = addToCells(cells, balls)
-
+    
     for i in range(len(cells)):
         for ball1 in cells[i]:
             pygame.draw.circle(screen,ball1.colour,ball1.pos,ball1.size)
-            ball1.move()        
-            ball1.reflect(1.1)
-            for j in [-97,-96,-95,-1,0,1,95,96,97]:
-                if i+j > 5183 or i+j < 0:
-                    continue
-                for ball2 in cells[i+j]:
-                    if ball2 == ball1:
-                        continue
-                    overlap = ball1.size+ball2.size - mag(ball1.pos-ball2.pos)
-                    if overlap > 0:
-                        ball1.pos += 0.5*overlap*unit(ball1.pos-ball2.pos)
-                        ball2.pos += 0.5*overlap*unit(ball2.pos-ball1.pos)
-                        if ball1.isColliding or ball2.isColliding:
-                            continue
-                        ball1.collide(ball2, 0.1)
-                        ball1.isColliding = True
-                        ball2.isColliding = True
+            ball1.move(T*ball1.vel)
+            collisions = ball1.detectCollisions(i)
+            for collision in collisions:
+                ball2 = collision[1]
+                direction = ball1.pos - ball2.pos
+                ball1.move(0.5*collision[0]*direction)
+                ball2.move(-0.5*collision[0]*direction)
+                ball1.collide(ball2)
+            ball1.reflect(0.7)
 
     energy = 0
     for ball1 in balls:
+        ball1.vel += np.array([0.0,100.0])*T
         ball1.isColliding = False
         energy += 0.5*ball1.size*mag(ball1.vel)**2
         print(mag(ball1.vel))
