@@ -76,6 +76,7 @@ class ball:
         # print(m1*mag(self.vel)**2+m2*mag(ball2.vel)**2)
 
 balls = [ball(np.array([random.uniform(0.0,1920.0),random.uniform(0.0,1080.0)]),np.array([(-1)**i*random.uniform(0.0,40.0),(-1)**i*random.uniform(0.0,40.0)]),random.uniform(9,10),(i%255,0,255-i%255)) for i in range(256)]
+balls = []
 # balls.append(ball(np.array([20.0,520.0]),np.array([0.0,0.0]),20,"blue"))
 cells = []
 
@@ -96,22 +97,22 @@ while True:
                 T += 0.01
             if event.key == pygame.K_DOWN:
                 T -= 0.01
-    # if count % 10 == 0:
-    #     colOffset = count % 1020
-    #     if colOffset > 510:
-    #         colOffset = 1020 - colOffset
-    #     print(colOffset)
-    #     a = 255 - colOffset
-    #     if a < 0:
-    #         a = 0
-    #     b = colOffset
-    #     if b > 255:
-    #         b = 510 - b
-    #     c = colOffset - 255
-    #     if c < 0:
-    #         c = 0
-    #     print(a,b,c)
-    #     balls.append(ball(np.array([20.0,20.0]),np.array([1200.0,0.0]),10,(a,b,c)))
+    if count % 10 == 0:
+        colOffset = count % 1020
+        if colOffset > 510:
+            colOffset = 1020 - colOffset
+        print(colOffset)
+        a = 255 - colOffset
+        if a < 0:
+            a = 0
+        b = colOffset
+        if b > 255:
+            b = 510 - b
+        c = colOffset - 255
+        if c < 0:
+            c = 0
+        print(a,b,c)
+        balls.append(ball(np.array([20.0,20.0]),np.array([1200.0,0.0]),10,(a,b,c)))
 
     cells = addToCells(cells, balls)
 
