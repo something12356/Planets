@@ -119,7 +119,7 @@ while True:
         for ball1 in cells[i]:
             pygame.draw.circle(screen,ball1.colour,ball1.pos,ball1.size)
             ball1.move()        
-            ball1.reflect(1.5)
+            ball1.reflect(1.1)
             for j in [-97,-96,-95,-1,0,1,95,96,97]:
                 if i+j > 5183 or i+j < 0:
                     continue
@@ -132,7 +132,7 @@ while True:
                         ball2.pos += 0.5*overlap*unit(ball2.pos-ball1.pos)
                         if ball1.isColliding or ball2.isColliding:
                             continue
-                        ball1.collide(ball2, 0)
+                        ball1.collide(ball2, 0.1)
                         ball1.isColliding = True
                         ball2.isColliding = True
 
