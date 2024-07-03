@@ -88,8 +88,11 @@ class ball:
         m1, m2 = self.size, ball2.size
         # print(m1*mag(self.vel)**2+m2*mag(ball2.vel)**2)
         norm1New, norm2New = (norm1*m1+norm2*m2-m2*e*(norm1-norm2))/(m1+m2), (norm1*m1+norm2*m2-m1*e*(norm2-norm1))/(m1+m2)
+        print(norm1New, n)
+        print(self.vel)
         self.vel = tan1+norm1New*n
-        ball2.vel = tan1+norm2New*n
+        print(self.vel)
+        ball2.vel = -tan1+norm2New*n
         # print(m1*mag(self.vel)**2+m2*mag(ball2.vel)**2)
 
 balls = [ball(np.array([random.uniform(0.0,1920.0),random.uniform(0.0,1080.0)]),np.array([(-1)**i*random.uniform(0.0,40.0),(-1)**i*random.uniform(0.0,40.0)]),random.uniform(9,10),(i%255,0,255-i%255)) for i in range(256)]
@@ -118,7 +121,7 @@ while True:
         colOffset = count % 1020
         if colOffset > 510:
             colOffset = 1020 - colOffset
-        print(colOffset)
+        # print(colOffset)
         a = 255 - colOffset
         if a < 0:
             a = 0
@@ -128,7 +131,7 @@ while True:
         c = colOffset - 255
         if c < 0:
             c = 0
-        print(a,b,c)
+        # print(a,b,c)
         balls.append(ball(np.array([20.0,20.0]),np.array([120.0,0.0]),10,(a,b,c)))
 
     cells = addToCells(cells, balls)
@@ -141,9 +144,9 @@ while True:
             for collision in collisions:
                 ball2 = collision[1]
                 direction = ball1.pos - ball2.pos
+                ball1.collide(ball2)
                 ball1.move(0.5*collision[0]*direction)
                 ball2.move(-0.5*collision[0]*direction)
-                ball1.collide(ball2)
             ball1.reflect(0.7)
 
     energy = 0
@@ -151,11 +154,11 @@ while True:
         ball1.vel += np.array([0.0,100.0])*T
         ball1.isColliding = False
         energy += 0.5*ball1.size*mag(ball1.vel)**2
-        print(mag(ball1.vel))
-    print("Total kinetic energy:",energy)
+    #     print(mag(ball1.vel))
+    # print("Total kinetic energy:",energy)
     count += 1
     # if count == 50:
     #     balls[-1].vel = np.array([200.0,0.0])
-    print('---')
+    # print('---')
     pygame.display.flip()
     clock.tick(60)
