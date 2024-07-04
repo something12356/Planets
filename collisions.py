@@ -74,8 +74,6 @@ class ball:
                 overlap = self.size+ball2.size - mag(self.pos-ball2.pos)
                 if overlap > 0:
                     collidesWith.append([overlap,ball2])
-                    self.isColliding = True
-                    ball2.isColliding = True
             return collidesWith
 
 
