@@ -42,14 +42,14 @@ class ball:
         self.colour = colour
         self.isColliding = False
 
-    def move(self,displacement):
-        newPos = self.pos + displacement
+    def move(self):
+        newPos = self.pos + T*self.vel
         if newPos[x] >= self.size and newPos[x] <= SIZE[x]-self.size and newPos[y] >= self.size and newPos[y] <= SIZE[y]-self.size:
             self.pos = newPos
         else:
             newPos = self.pos
             while newPos[x] >= self.size and newPos[x] <= SIZE[x]-self.size and newPos[y] >= self.size and newPos[y] <= SIZE[y]-self.size:
-                newPos += unit(displacement)
+                newPos += unit(self.vel)
             self.pos = newPos
 
     def reflect(self, e=1):
@@ -63,10 +63,6 @@ class ball:
                 if self.pos[i] > SIZE[i] - self.size:
                     self.pos[i] = SIZE[i] - self.size
 
-    def detectCollision(self, i):
-        overlap = self.size+ball2.size - mag(self.pos-ball2.pos)
-        return overlap
-
     def collide(self, ball2, e=1):
         n = unit(ball2.pos-self.pos)
         dot1 = dot(self.vel, n)
@@ -76,13 +72,11 @@ class ball:
         # print(m1*mag(self.vel)**2+m2*mag(ball2.vel)**2)
         norm1New, norm2New = (norm1*m1+norm2*m2-m2*e*(norm1-norm2))/(m1+m2), (norm1*m1+norm2*m2-m1*e*(norm2-norm1))/(m1+m2)
         self.vel = tan1+norm1New*n
-        ball2.vel = -tan1+norm2New*n
+        ball2.vel = tan1+norm2New*n
         # print(m1*mag(self.vel)**2+m2*mag(ball2.vel)**2)
 
 balls = [ball(np.array([random.uniform(0.0,1920.0),random.uniform(0.0,1080.0)]),np.array([(-1)**i*random.uniform(0.0,40.0),(-1)**i*random.uniform(0.0,40.0)]),random.uniform(9,10),(i%255,0,255-i%255)) for i in range(256)]
-balls = []
 # balls.append(ball(np.array([20.0,520.0]),np.array([0.0,0.0]),20,"blue"))
-# balls.append(ball(np.array([40.0,520.0]),np.array([0.0,0.0]),20,"blue"))
 cells = []
 
 pygame.init()
@@ -102,53 +96,55 @@ while True:
                 T += 0.01
             if event.key == pygame.K_DOWN:
                 T -= 0.01
-    if count % 10 == 0:
-        colOffset = count % 1020
-        if colOffset > 510:
-            colOffset = 1020 - colOffset
-        # print(colOffset)
-        a = 255 - colOffset
-        if a < 0:
-            a = 0
-        b = colOffset
-        if b > 255:
-            b = 510 - b
-        c = colOffset - 255
-        if c < 0:
-            c = 0
-        # print(a,b,c)
-        balls.append(ball(np.array([20.0,20.0]),np.array([120.0,0.0]),10,(a,b,c)))
+    # if count % 10 == 0:
+    #     colOffset = count % 1020
+    #     if colOffset > 510:
+    #         colOffset = 1020 - colOffset
+    #     print(colOffset)
+    #     a = 255 - colOffset
+    #     if a < 0:
+    #         a = 0
+    #     b = colOffset
+    #     if b > 255:
+    #         b = 510 - b
+    #     c = colOffset - 255
+    #     if c < 0:
+    #         c = 0
+    #     print(a,b,c)
+    #     balls.append(ball(np.array([20.0,20.0]),np.array([1200.0,0.0]),10,(a,b,c)))
 
     cells = addToCells(cells, balls)
-    
+
     for i in range(len(cells)):
         for ball1 in cells[i]:
             pygame.draw.circle(screen,ball1.colour,ball1.pos,ball1.size)
-            ball1.move(T*ball1.vel)
+            ball1.move()        
+            ball1.reflect(1.1)
             for j in [-97,-96,-95,-1,0,1,95,96,97]:
                 if i+j > 5183 or i+j < 0:
                     continue
                 for ball2 in cells[i+j]:
-                    if ball1 == ball2:
+                    if ball2 == ball1:
                         continue
-                    overlap = ball1.detectCollision(ball2)
-                    if overlap > 0:         
-                        direction = ball1.pos - ball2.pos
-                        ball1.collide(ball2) 
-                        ball1.move(0.5*overlap*unit(direction))
-                        ball2.move(-0.5*overlap*unit(direction))
-            ball1.reflect(0.7)
+                    overlap = ball1.size+ball2.size - mag(ball1.pos-ball2.pos)
+                    if overlap > 0:
+                        ball1.pos += 0.5*overlap*unit(ball1.pos-ball2.pos)
+                        ball2.pos += 0.5*overlap*unit(ball2.pos-ball1.pos)
+                        if ball1.isColliding or ball2.isColliding:
+                            continue
+                        ball1.collide(ball2, 0.1)
+                        ball1.isColliding = True
+                        ball2.isColliding = True
 
     energy = 0
     for ball1 in balls:
         ball1.isColliding = False
-        ball1.vel += np.array([0.0, 100.0])*T
         energy += 0.5*ball1.size*mag(ball1.vel)**2
-    #     print(mag(ball1.vel))
-    # print("Total kinetic energy:",energy)
+        print(mag(ball1.vel))
+    print("Total kinetic energy:",energy)
     count += 1
-    if count == 50:
-        balls[-1].vel = np.array([200.0,0.0])
-    # print('---')
+    # if count == 50:
+    #     balls[-1].vel = np.array([200.0,0.0])
+    print('---')
     pygame.display.flip()
     clock.tick(60)
