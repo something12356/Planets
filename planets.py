@@ -120,7 +120,7 @@ sun = planet(20,np.array([1.0,0.0]),1000000,np.array([960.0,540.0]),(255,255,0))
 venus = planet(7,np.array([-2.0,-1.0]),1,np.array([1200.0,910.1]),(139,115,85))
 earth = planet(7,np.array([5.0,-2.0]),1,np.array([960.0,270.0]),(0,0,255))
 # moon = planet(5,np.array([2.8690832,-0.03653574]),0.012,np.array([955.0,270]),"grey")
-jupiter = planet(10,np.array([0.0,3.0]),33300,np.array([500.0,540.0]),(210,105,30))
+jupiter = planet(10,np.array([0.0,3.0]),33000,np.array([500.0,540.0]),(210,105,30))
 planets = [sun,venus, earth, jupiter]
 
 pygame.init()
