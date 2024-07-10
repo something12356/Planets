@@ -1,5 +1,6 @@
 - [x] GITHUB
 - [x] **NEED ENCAPSULATION AND GETTERS / SETTERS!**
+- [ ] Arrows: Resultant be fixed amount of size, e.g. 1.5*size + 10 or something. Scale everything else according to that.
 - [ ] Polymorphism with celestial body class, asteroid, planet and sun inherit. Asteroids should receive less simulation time because they *will* lag it otherwise lmao.
 - [ ] Try including composition / aggregation somewhere? Idk how it'd work, maybe when launching rockets or something they could be created by the planet they're launched from.
 - [ ] x=0,y=1 indexing? To make coordinates make more sense. Or X Y.
