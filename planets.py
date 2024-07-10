@@ -211,10 +211,10 @@ while running:
         arrow = arrowsToDraw.pop(0)
         if arrow[0] != "white":
             # print("RESULTANT:", abs(maths.log(mag(forceToDraw)+1,1000))*240*mag(arrow[2]), abs(arrow[3]))
-            drawArrow(arrow[0], arrow[1], arrow[1]+abs(maths.log(mag(forceToDraw)+1,1000))*240*mag(arrow[2])/mag(forceToDraw)*unit(arrow[2])+4*abs(arrow[3])*unit(arrow[2]))
+            drawArrow(arrow[0], arrow[1], arrow[1]+abs(maths.log(mag(forceToDraw)+1,1000))*240*mag(arrow[2])/mag(forceToDraw)*unit(arrow[2])+(arrow[3]+20)*unit(arrow[2]))
         else:
             # print("COMPONENT:", abs(maths.log(mag(forceToDraw)+1,1000))*240*mag(arrow[2]), abs(arrow[3]))
-            drawArrow(arrow[0], arrow[1], arrow[1]+abs(maths.log(mag(forceToDraw)+1,1000))*60*mag(arrow[2])/mag(forceToDraw)*unit(arrow[2])+2*abs(arrow[3])*unit(arrow[2]))
+            drawArrow(arrow[0], arrow[1], arrow[1]+abs(maths.log(mag(forceToDraw)+1,1000))*60*mag(arrow[2])/mag(forceToDraw)*unit(arrow[2])+(arrow[3]+10)*unit(arrow[2]))
     arrowsToDraw = []
 
     ## Draws all the planets
