@@ -163,13 +163,13 @@ while running:
             p1.addForce(p1p2gravity)
             ## Draws force arrows showing the forces acting on the planet
             if planets.index(p1) == focus and not comFocus:
-                arrowsToDraw.append(["white", p1.getPos(), np.copy(p1p2gravity), p1.getSize()])
+                arrowsToDraw.append(["white", p1, np.copy(p1p2gravity)])
             if planets.index(p2) == focus and not comFocus:
-                arrowsToDraw.append(["white", p2.getPos(), -1*np.copy(p1p2gravity), p2.getSize()])
+                arrowsToDraw.append(["white", p2, -1*np.copy(p1p2gravity)])
             ## Can take away here due to Newton's third law, each force has equal and opposite reaction force
             p2.addForce(-p1p2gravity)
         if planets.index(p1) == focus and not comFocus:
-            arrowsToDraw.append([p1.getColour(), p1.getPos(), np.copy(p1.getResultant()), p1.getSize()])
+            arrowsToDraw.append([p1.getColour(), p1, np.copy(p1.getResultant())])
             arrowsToDraw.append(np.copy(p1.getResultant()))
         p1.secondLaw(p1.getResultant())
         ## Takes position before and after so that the lines for the orbits can be drawn
@@ -209,12 +209,14 @@ while running:
             forceToDraw = arrowsToDraw[-1]
     while len(arrowsToDraw) > 1:
         arrow = arrowsToDraw.pop(0)
+        p = arrow[1]
+        print("FORCE:",mag(arrow[2]))
         if arrow[0] != "white":
             # print("RESULTANT:", abs(maths.log(mag(forceToDraw)+1,1000))*240*mag(arrow[2]), abs(arrow[3]))
-            drawArrow(arrow[0], arrow[1], arrow[1]+abs(maths.log(mag(forceToDraw)+1,1000))*240*mag(arrow[2])/mag(forceToDraw)*unit(arrow[2])+(arrow[3]+20)*unit(arrow[2]))
+            drawArrow(arrow[0], p.getPos(), p.getPos()+300*maths.log(mag(arrow[2])+1,2)*unit(arrow[2])/maths.log(p.getMass()+1,1.1)+(p1.getSize()+10)*unit(arrow[2]))
         else:
             # print("COMPONENT:", abs(maths.log(mag(forceToDraw)+1,1000))*240*mag(arrow[2]), abs(arrow[3]))
-            drawArrow(arrow[0], arrow[1], arrow[1]+abs(maths.log(mag(forceToDraw)+1,1000))*60*mag(arrow[2])/mag(forceToDraw)*unit(arrow[2])+(arrow[3]+10)*unit(arrow[2]))
+            drawArrow(arrow[0], p.getPos(), p.getPos()+200*maths.log(mag(arrow[2])+1,2)*unit(arrow[2])/maths.log(p.getMass()+1,1.1)+(p1.getSize()+5)*unit(arrow[2]))
     arrowsToDraw = []
 
     ## Draws all the planets
