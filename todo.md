@@ -1,12 +1,11 @@
 - [x] GITHUB
 - [x] **NEED ENCAPSULATION AND GETTERS / SETTERS!**
-- [ ] Arrows: Resultant be fixed amount of size, e.g. 1.5*size + 10 or something. Scale everything else according to that. Might not be a good idea though? Maybe just leave as is, it works well!
-- [ ] Polymorphism with celestial body class, asteroid, planet and sun inherit. Asteroids should receive less simulation time because they *will* lag it otherwise lmao.
+- [x] Arrows: Resultant be fixed amount of size, e.g. 1.5*size + 10 or something. Scale everything else according to that. Might not be a good idea though? Maybe just leave as is, it works well!
+- [ ] Polymorphism with celestial body class, asteroid, planet and sun inherit. Asteroids should receive less simulation time because they *will* lag it otherwise lmao. Also asteroids do NOT get orbital lines!!
 - [ ] Try including composition / aggregation somewhere? Idk how it'd work, maybe when launching rockets or something they could be created by the planet they're launched from.
 - [ ] x=0,y=1 indexing? To make coordinates make more sense. Or X Y.
 - [x] Button to switch focus. I.e. comDisplacement becomes focusDisplacement.
-- [ ] Optimisation, e.g. not drawing things that are off-screen.
-	- Check with **size** so that you don't delete stuff the moment its centre is off-screen, only when the entire sprite is off-screen.
+- [x] Optimisation, e.g. not drawing things that are off-screen.
 - [ ] Add support for varying screen sizes.
 - [ ] Planet choices but also *presets*
 	- [ ] CONFIG FILE!

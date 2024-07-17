@@ -4,12 +4,14 @@ import numpy as np
 
 ## Time-scale, how much vel and position should change per tick
 ## Lower value = slower but more accurate simulation
-T=1
+T = 1
+x = 0
+y = 1
 ## Gravitational constant, defines how strong gravity is
 G = 6.6743015*10**-3
 
 ## How long to draw the lines representing the planets' orbits.
-LINE_LENGTH = 1000
+MAX_LINES = 2000
 
 ## Centre of screen
 centre = np.array([960.0,540.0])
@@ -55,6 +57,12 @@ def com(planets):
         mass += p.getMass()
     return com/mass
 
+## Takes in vector, returns False if within the screen, True otherwise
+def offscreen(vec):
+    if vec[x] > 0 and vec[x] < 1920 and vec[y] > 0 and vec[y] < 1080:
+        return False
+    return True
+
 class planet:
     def __init__(self,size,vel,mass,pos,colour):
         self.size = size
@@ -63,6 +71,7 @@ class planet:
         self.pos = pos
         self.colour = colour
         self.resultant = 0
+        self.lines = []
     
     ## All the getters and setters
     def getPos(self):
@@ -82,6 +91,16 @@ class planet:
 
     def getSize(self):
         return self.size
+
+    def getLines(self):
+        return self.lines
+    
+    
+    def addLine(self, line):
+        self.lines.append(line)
+        ## Gets rid of excess lines, prevents them from becoming too long and lagging the system
+        if len(self.lines) > LINE_LENGTH:
+            self.lines = self.lines[len(self.lines)-LINE_LENGTH:]
 
     ## Adds a force to the resultant force on the planet
     def addForce(self, force):
@@ -118,11 +137,12 @@ class planet:
 
 sun = planet(20,np.array([1.0,0.0]),1000000,np.array([960.0,540.0]),(255,255,0))
 venus = planet(7,np.array([-2.0,-1.0]),1,np.array([1200.0,910.1]),(139,115,85))
-earth = planet(7,np.array([5.0,-2.0]),1,np.array([960.0,270.0]),(0,0,255))
+earth = planet(7,np.array([6.0,-2.0]),1,np.array([960.0,270.0]),(0,0,255))
 # moon = planet(5,np.array([2.8690832,-0.03653574]),0.012,np.array([955.0,270]),"grey")
 jupiter = planet(10,np.array([0.0,3.0]),33000,np.array([500.0,540.0]),(210,105,30))
 planets = [sun,venus, earth, jupiter]
 
+LINE_LENGTH = int(MAX_LINES / len(planets))
 pygame.init()
 screen = pygame.display.set_mode((1920,1080))
 clock = pygame.time.Clock()
@@ -131,7 +151,7 @@ count = 0
 linesToDraw = []
 arrowsToDraw = []
 focus = 0
-comFocus = True
+comFocus = False
 arrows = False
 
 while running:
@@ -154,6 +174,11 @@ while running:
                 comFocus = not comFocus
             if event.key == pygame.K_f:
                 arrows = not arrows
+            if event.key == pygame.K_w:
+                G += 0.1 * G
+            if event.key == pygame.K_s:
+                G -= 0.1 * G
+
 
     ## Works out gravitational force between all planets and moves them according each tick
     for p1 in planets:
@@ -176,31 +201,32 @@ while running:
         beforePos = np.copy(p1.getPos())
         p1.move(T*p1.getVel())
         afterPos = np.copy(p1.getPos())
-        linesToDraw.append([beforePos,afterPos,p1.getColour()])
+        p1.addLine([beforePos,afterPos,p1.getColour()])
         p1.resultant = 0
 
-        ## Makes it so that the screen follows whichever planet the user wants to look at
-    ## Alternatively follows the centre of mass, useful for binary star systems
+    ## Makes it so that the screen follows whichever planet the user wants to look at
+    ## Alternatively, follows the centre of mass, useful for binary star systems
     if comFocus:
         focusDisplacement = centre - com(planets)
     else:
         focusDisplacement = centre - planets[focus].getPos()
     for p in planets:
         p.move(focusDisplacement)
-    for line in linesToDraw:
-        line[0] += focusDisplacement
-        line[1] += focusDisplacement
+        for line in p.getLines():
+            line[0] += focusDisplacement
+            line[1] += focusDisplacement
 
-    index = 0
-    for line in linesToDraw:
-        ## Index ratio is used to reduce opacity and thickness of the older lines 
-        ## An index counter is used as python cannot find the index of np arrays with multiple elements
-        indexRatio = index/len(linesToDraw)
-        pygame.draw.aaline(screen,([int(indexRatio*line[2][i]) for i in range(3)]),line[0],line[1],int(indexRatio*255))
-        index+=1
-    ## Gets rid of excess lines, prevents them from becoming too long and lagging the system
-    if len(linesToDraw) > LINE_LENGTH:
-        linesToDraw = linesToDraw[len(linesToDraw)-LINE_LENGTH:]
+    for p in planets:
+        index = 0
+        for line in p.getLines():
+            if offscreen(line[0]) or offscreen(line[1]):
+                index += 1
+                continue
+            ## Index ratio is used to reduce opacity and thickness of the older lines 
+            ## An index counter is used as python cannot find the index of np arrays with multiple elements
+            indexRatio = index/len(p.getLines())
+            pygame.draw.aaline(screen,([int(indexRatio*line[2][i]) for i in range(3)]),line[0],line[1],int(indexRatio*255))
+            index+=1
 
     if not arrows:
         arrowsToDraw = []
@@ -221,6 +247,8 @@ while running:
 
     ## Draws all the planets
     for p in planets:       
+        if offscreen(p.getPos()):
+            continue
         pygame.draw.circle(screen,p.getColour(),p.getPos(),p.getSize())
         pygame.draw.aaline(screen,(p.getColour()),p.getPos(),p.getPos())
 
