@@ -3,23 +3,24 @@
 - [x] Arrows: Resultant be fixed amount of size, e.g. 1.5*size + 10 or something. Scale everything else according to that. Might not be a good idea though? Maybe just leave as is, it works well!
 - [ ] Polymorphism with celestial body class, asteroid, planet and sun inherit. Asteroids should receive less simulation time because they *will* lag it otherwise lmao. Also asteroids do NOT get orbital lines!!
 - [ ] Try including composition / aggregation somewhere? Idk how it'd work, maybe when launching rockets or something they could be created by the planet they're launched from.
-- [ ] x=0,y=1 indexing? To make coordinates make more sense. Or X Y.
+- [x] x=0,y=1 indexing? To make coordinates make more sense. Or X Y.
 - [x] Button to switch focus. I.e. comDisplacement becomes focusDisplacement.
 - [x] Optimisation, e.g. not drawing things that are off-screen.
 - [ ] Add support for varying screen sizes.
 - [ ] Planet choices but also *presets*
 	- [ ] CONFIG FILE!
 	- [ ] More constants for configurable things
-- [ ] Change more stuff into functions, should be very modular and easy to change.
+- [x] Change more stuff into functions, should be very modular and easy to change.
 	- [ ] E.g. make DrawLines() a function, shift everything to the focus a function, make simulating law of gravity on planets a function, just wrap it up, main loop should really be quite small running the few main functions and nothing else.
 - [ ] Change everything to be in SI
-	- [ ] Accurate G constant
-	- [ ] dConstant
+	- [x] Accurate G constant
+	- [x] dConstant
 		- More metres per pixel basically
+	- [x] Display on log scale
 		- Display on log scale? Could make the system actually look good while still being accurate.
 		- Or be able to zoom out without the planet size changing quite as much?
 		- **See reddit thing sent in Connor DMs**
-	- [ ] Change origin to be in more sensible location, either bottom left or centre of screen
+- [ ] Comment code more
 - [ ] Change everything to be with sprites (same for collisions program, can then use sprite collision detection!)
 - [ ] *COLLISIONS*
 	- There is a separate collisions program in Planets, check it out! Needs some fixes but should be a good template for implementing it into the main program (and make sure to replace size with mass in the momentum equation when porting it over to planets)
