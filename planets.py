@@ -5,27 +5,28 @@ import numpy as np
 ## Time-scale, how much vel and position should change per tick
 ## Lower value = slower but more accurate simulation
 YEAR = 315576
-T = YEAR
+timeScale = 0.1 * YEAR
 ## The distance constant is used to translate SI units (metres) into pixels.
-## The constant is > 1 because I'm using logarithms to plot the planets.
-## The log of the distance from the Earth to the Sun is only 11, which is a bit too small for my taste.
-DIST_CONST = 10
+## 2 * 10**-12 means that the earth is about 30 pixels from the sun.
+distScale = 4 * 10**-9
+zoomScale = distScale
+## "Warping" means subtracting a constant distance from a planets distance from the sun
+## when displaying the planet. This avoids having a huge gap between the sun and Mercury.
+WARP_DISTANCE = 5.75 * 10**10
 x = 0
 y = 1
 ## Gravitational constant, defines how strong gravity is. Real life G = 
 G = 6.6743015*10**-11
 
 ## How long to draw the lines representing the planets' orbits.
-MAX_LINES = 100
+MAX_LINES = 200
 
 ## Centre of screen
 centre = np.array([960.0,540.0])
 
 ## Finds the magnitude of a vector (np array)
 def mag(vec):
-    mag = 0
-    for i in vec:
-        mag += i**2
+    mag = sum([i**2 for i in vec])
     return maths.sqrt(mag)
 
 ## Returns a vector with the same direction as the input of length 1
@@ -40,14 +41,40 @@ def normal(vector):
     normal = np.array([-1*vector[y],vector[x]])
     return unit(normal)
 
+## Switching from one zoom to another instantly is very jarring. 
+## This uses interpolation to smoothly transition between zooms.
+## I could use linear interpolation but I actually think this non-linear thing looks nicer so I'm using that.
+def zoom(distScale, zoomScale):
+    return distScale*0.9 + zoomScale*0.1
+
 ## Takes in a position vector and returns that vector scaled by the log of its distance from the centre of mass.
-def logPos(vector, debug=False, planet=0):
+def logPos(vector, planet=None, takeIntoAccountSize=False, warp=True):
     comVector = vector - com(planets)
-    if debug:
-        print(planet.getColour())
-        print(mag(comVector))
-        print('---')
-    return com(planets) + maths.log(mag(comVector))*unit(comVector)*DIST_CONST
+    if warp:
+        if mag(comVector) > WARP_DISTANCE:
+            comVector = comVector - WARP_DISTANCE*unit(comVector)
+            if planet == mercury:
+                print(mag(comVector))
+    # takeIntoAccountSize means that the program considers the distance from the centre of mass
+    # to the edge of a planet, rather than its centre.
+    if takeIntoAccountSize:
+        if mag(comVector) <= planet.getSize():
+            if planet == mercury:
+                input("")
+            comVector = np.array([0.0,0.0])
+        else:
+            comVector = comVector - planet.getSize()*unit(comVector)
+    # if debug:
+    #     print(planet.getColour())
+    #     print(mag(comVector))
+    #     print('---')
+    return com(planets) + maths.log(mag(comVector)+1, 10)*unit(comVector)*distScale
+
+## Takes in a position vector and outputs that vector from the centre of mass scaled by the distance constant.
+## This way if a planet is 150 million km from the sun, it can be displayed as x amount of pixels from the sun.
+def scaledPos(vector, warp=True):
+    comVector = vector - com(planets)
+    return com(planets) + distScale * comVector
 
 ## Draws an arrow by drawing a line, picking two points either side of that line, and drawing lines from the end of the first line to those two points
 def drawArrow(colour, startPos, endPos):
@@ -70,31 +97,31 @@ def displayArrows(arrowsToDraw):
         print("FORCE:",mag(arrow[2]))
         if arrow[0] != "white":
             # print("RESULTANT:", abs(maths.log(mag(forceToDraw)+1,1000))*240*mag(arrow[2]), abs(arrow[3]))
-            drawArrow(arrow[0], p.getLogPos(), p.getLogPos()+300*maths.log(mag(arrow[2])+1,2)*unit(arrow[2])/maths.log(p.getMass()+1,1.1)+(p.getSize()+10)*unit(arrow[2]))
+            drawArrow(arrow[0], p.getScaledPos(), p.getScaledPos()+300*maths.log(mag(arrow[2])+1,2)*unit(arrow[2])/maths.log(p.getMass()+1,1.1)+(maths.log(p.getSize())+10)*unit(arrow[2]))
         else:
             # print("COMPONENT:", abs(maths.log(mag(forceToDraw)+1,1000))*240*mag(arrow[2]), abs(arrow[3]))
-            drawArrow(arrow[0], p.getLogPos(), p.getLogPos()+200*maths.log(mag(arrow[2])+1,2)*unit(arrow[2])/maths.log(p.getMass()+1,1.1)+(p.getSize()+5)*unit(arrow[2]))
+            drawArrow(arrow[0], p.getScaledPos(), p.getScaledPos()+200*maths.log(mag(arrow[2])+1,2)*unit(arrow[2])/maths.log(p.getMass()+1,1.1)+(maths.log(p.getSize())+5)*unit(arrow[2]))
 
-def displayLines(planets):
+def displayLines(planets, adjustment):
     for p in planets:
         index = 0
-        for line in p.getLines():
-            if offscreen(line[0]) and offscreen(line[1]):
-                index += 1
-                continue
+        for index, line in enumerate(p.getLines()):
+            # print(line[0],line[1])
+            # if offscreen(line[0]) and offscreen(line[1]):
+            #     index += 1
+            #     continue
             ## Index ratio is used to reduce opacity and thickness of the older lines 
             ## An index counter is used as python cannot find the index of np arrays with multiple elements
             indexRatio = index/len(p.getLines())
-            pygame.draw.aaline(screen,([int(indexRatio*line[2][i]) for i in range(3)]),line[0],line[0],int(indexRatio*255))
-            index+=1
+            pygame.draw.aaline(screen,([int(indexRatio*line[2][i]) for i in range(3)]),scaledPos(line[0])+adjustment,scaledPos(line[1])+adjustment,int(indexRatio*255))
 
-def displayPlanets(planets):
+def displayPlanets(planets, adjustment):
     for p in planets:
-        if offscreen(p.getLogPos()):
-            continue
+        # if offscreen(p.getLogPos()):
+        #     continue
         # if p.getColour() == (0,0,255):
         #     print(p.getLogPos())
-        pygame.draw.circle(screen,p.getColour(),p.getLogPos(),p.getSize())
+        pygame.draw.circle(screen,p.getColour(),p.getScaledPos()+adjustment,p.getSize()*distScale+maths.log(p.getSize())*distScale)
 
 ## Finds the centre of mass of the sysetm
 def com(planets):
@@ -105,17 +132,21 @@ def com(planets):
         mass += p.getMass()
     return com/mass
 
-def focusAdjustment(planets, comFocus):
-    if comFocus:
-        focusDisplacement = centre - com(planets)
+def focusAdjustment(planets, comFocus, freeCam, camera):
+    if freeCam:
+        focusDisplacement = centre - camera
     else:
-        focusDisplacement = centre - planets[focus].getLogPos()
-    for p in planets:
-        p.move(focusDisplacement)
-        # print(focusDisplacement)
-        for line in p.getLines():
-            line[0] += focusDisplacement
-            line[1] += focusDisplacement
+        if comFocus:
+            focusDisplacement = centre - scaledPos(com(planets))
+        else:
+            focusDisplacement = centre - planets[focus].getScaledPos()
+    return focusDisplacement
+    # for p in planets:
+    #     p.move(focusDisplacement)
+    #     # print(focusDisplacement)
+    #     for line in p.getLines():
+    #         line[0] += focusDisplacement
+    #         line[1] += focusDisplacement
 
 def simulateTick(arrowsToDraw, planets):
     for p1 in planets:
@@ -135,9 +166,9 @@ def simulateTick(arrowsToDraw, planets):
             arrowsToDraw.append(np.copy(p1.getResultant()))
         p1.secondLaw(p1.getResultant())
         ## Takes position before and after so that the lines for the orbits can be drawn
-        beforePos = np.copy(p1.getLogPos())
-        p1.move(T*p1.getVel())
-        afterPos = np.copy(p1.getLogPos())
+        beforePos = np.copy(p1.getPos())
+        p1.move(timeScale*p1.getVel())
+        afterPos = np.copy(p1.getPos())
         p1.addLine([beforePos,afterPos,p1.getColour()])
         p1.resultant = 0
     return arrowsToDraw
@@ -168,7 +199,10 @@ class planet:
         ## Instead, the log of a distance is used. The logarithmic distance of the planets from the sun
         ## increases at a roughly linear rate, making it very easy to display. The centre of mass is
         ## chosen as the centre, as it exists in all star systems, regardless of how many stars they have.
-        return logPos(self.getPos(), True, self)
+        return logPos(self.getPos(), self, True)
+
+    def getScaledPos(self):
+        return scaledPos(self.getPos())
 
     def getMass(self):
         return self.mass
@@ -201,8 +235,8 @@ class planet:
     ## Sets velocity
     ## Uses F = ma to find acceleration, add to vel
     def secondLaw(self, force):
-        self.vel += T*force/self.getMass()
-    
+        self.vel += timeScale*force/self.getMass()
+   
     ## Sets position
     ## Add vel to position to make it move
     def move(self, step):
@@ -227,13 +261,14 @@ class planet:
 # earth = planet(5,np.array([0.3,0.0]),1,np.array([960.0,50.0]),(0,0,255))
 # planets = [sun1,sun2,earth]
 
-sun = planet(20,np.array([0.0,0.0]),1.99*10**30,np.array([960.0, 540.0]),(255,255,0))
-mercury = planet(4, np.array([0.0, 4.787*10**4]), 3.301*10**23, np.array([5.791*10**10, 540.0]), (65, 68, 74))
-# venus = planet(7,np.array([-2.0,-1.0]),1,np.array([1200.0,910.1]),(139,115,85))
-earth = planet(7,np.array([0.0,2.978*10**4]),5.972*10**24,np.array([1.496*10**11,540.0]),(0,0,255))
-# moon = planet(5,np.array([2.8690832,-0.03653574]),0.012,np.array([955.0,270]),"grey")
+sun = planet(6.955 * 10**8, np.array([0.0,0.0]),1.99 * 10**30, np.array([960.0, 540.0]),(255,255,0))
+mercury = planet(2.440 * 10**7, np.array([0.0, 4.787 * 10**4]), 3.301 * 10**23, np.array([5.791 * 10**10, centre[x]]), (65,68,74))
+venus = planet(6.052 * 10**7, np.array([0.0, 3.502 * 10**4]),4.867 * 10**24, np.array([1.08 * 10**11, centre[x]]),(139,115,85))
+earth = planet(6.371 * 10 **7,np.array([0.0, 2.978 * 10**4]),5.972 * 10**24, np.array([1.496 * 10**11, centre[x]]),(0,0,255))
+moon = planet(1.738 * 10**7, np.array([0.0, 2.978*10**4+1.022*10**3]),7.348 * 10**22, np.array([1.496 * 10**11 - 3.63*10**8, centre[x]]),(153,153,153))
+mars = planet(3.390 * 10**7, np.array([0.0, 2.408 * 10**4]), 6.417 * 10**23, np.array([2.28 * 10**11, centre[x]]), (255,99,47))
 # jupiter = planet(10,np.array([0.0,3.0]),33000,np.array([500.0,540.0]),(210,105,30))
-planets = [sun, mercury, earth]
+planets = [sun, mercury, venus, earth, moon, mars]
 
 LINE_LENGTH = int(MAX_LINES / len(planets))
 pygame.init()
@@ -243,8 +278,10 @@ running = True
 count = 0
 arrowsToDraw = []
 focus = 0
-comFocus = True
+comFocus = False
+freeCam = False
 arrows = False
+camera = np.array([0.0, 0.0])
 
 while running:
     screen.fill((0,0,0))
@@ -255,32 +292,46 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
                 focus = (focus+1)%len(planets)
+                freeCam = False
             if event.key == pygame.K_LEFT:
                 focus = (focus-1)%len(planets)
+                freeCam = False
             if event.key == pygame.K_UP:
-                T += 0.1*YEAR
+                timeScale += 0.1*YEAR
             if event.key == pygame.K_DOWN:
-                T -= 0.1*YEAR
+                timeScale -= 0.1*YEAR
             if event.key == pygame.K_SPACE:
                 ## Toggles whether or not the screen is centered on the centre of mass
                 comFocus = not comFocus
+                freeCam = False
             if event.key == pygame.K_f:
                 arrows = not arrows
-            if event.key == pygame.K_w:
-                G += 0.1 * G
-            if event.key == pygame.K_s:
-                G -= 0.1 * G
+            # if event.key == pygame.K_w or pygame.K_s or pygame.K_a or pygame.K_d:
+            #     camera = focusAdjustment(planets, comFocus, freeCam, camera)
+            #     print(camera)
+            #     freeCam = True
+        if event.type == pygame.MOUSEWHEEL:
+            if event.y == 1:
+                if zoomScale < distScale:
+                    zoomScale = zoomScale*0.3 + distScale*0.7
+                zoomScale += 0.25*zoomScale
+                print(zoomScale)
+            if event.y == -1:
+                if zoomScale > distScale:
+                    zoomScale = zoomScale*0.3 + distScale*0.7
+                zoomScale -= 0.25*zoomScale
 
     ## Works out gravitational force between all planets and moves them according each tick
     arrowsToDraw = simulateTick(arrowsToDraw, planets)
+    distScale = zoom(distScale, zoomScale)
     ## focusAdjustment makes it so that the screen follows whichever planet the user wants to look at
     ## Alternatively, follows the centre of mass, useful for binary star systems
-    focusAdjustment(planets, comFocus)
-    displayLines(planets)
+    # focusAdjustment(planets, comFocus)
+    displayLines(planets, focusAdjustment(planets, comFocus, freeCam, camera))
     if arrows:
         displayArrows(arrowsToDraw)
     arrowsToDraw = []
-    displayPlanets(planets)
+    displayPlanets(planets, focusAdjustment(planets, comFocus, freeCam, camera))
 
     pygame.display.flip()
     clock.tick(60)

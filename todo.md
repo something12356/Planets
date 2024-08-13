@@ -5,14 +5,17 @@
 - [ ] Try including composition / aggregation somewhere? Idk how it'd work, maybe when launching rockets or something they could be created by the planet they're launched from.
 - [x] x=0,y=1 indexing? To make coordinates make more sense. Or X Y.
 - [x] Button to switch focus. I.e. comDisplacement becomes focusDisplacement.
-- [x] Optimisation, e.g. not drawing things that are off-screen.
-- [ ] Add support for varying screen sizes.
+- [ ] Optimisation, e.g. not drawing things that are off-screen.
+- [ ] Add support for varying screen sizes (pygame should have an autodetect thing?).
+- [ ] CHECK KE, MOMENTUM IS CONSERVED
+- [ ] Orbital lines fixed length rather than rely on timestep?
 - [ ] Planet choices but also *presets*
 	- [ ] CONFIG FILE!
 	- [ ] More constants for configurable things
+- [ ] UI FOR CHANGING THINGS LIKE G, SPEED, ETC
 - [x] Change more stuff into functions, should be very modular and easy to change.
-	- [ ] E.g. make DrawLines() a function, shift everything to the focus a function, make simulating law of gravity on planets a function, just wrap it up, main loop should really be quite small running the few main functions and nothing else.
-- [ ] Change everything to be in SI
+	- [x] E.g. make DrawLines() a function, shift everything to the focus a function, make simulating law of gravity on planets a function, just wrap it up, main loop should really be quite small running the few main functions and nothing else.
+- [x] Change everything to be in SI
 	- [x] Accurate G constant
 	- [x] dConstant
 		- More metres per pixel basically
@@ -30,7 +33,7 @@
 - [ ] Scoreboard for speed, distance from c.o.m., etc? Could use natural mergesort or similarly complex sorting algorithm.
 - [ ] Optimise lines to not use a list, just draw line and then let fade over time. See if that's possible with pygame, maybe ask around for help online + friends + canoe
 - [ ] A querying thing to query e.g. a nasa site to auto-add any planets you could want for your realistic solar system preset?
-- [ ] Zoom in / out?
+- [x] Zoom in / out?
 - [x] Orbit line not drawn inside of planet
 	- [x] Simplest way might just be layers rather than checking if the line is in the planet? Just draw the planets on top of the lines.
 - [x] Lines showing *actual* orbit, ignoring c.o.m. shifting
@@ -41,6 +44,7 @@
 	- Could inherit velocity and position from planet? Some form of inheritance would be very good for marks.
 	- Move and second law should add planet velocity / force but also orbital velocity around host planet
 	- Only take into account interaction only with that planet maybe? Depends on how computationally intensive it all is.
+- [ ] SPLIT PROGRAM INTO MULTIPLE FILES, VERY IMPORTANT
 - [ ] Test making 3d. **TEST.** Do in separate branch, see what graphics libraries needed, see how hard it would be to implement.
 	- [ ] If too difficult then could stick to same 2d graphics but make 3d and *project* it?
 	- [ ]  ^^ if doing this then make objects smaller the further they are from plane? To simulate distance? And also hide them if they're behind another object.
