@@ -259,9 +259,9 @@ class celestialBody:
    
     ## Sets position
     ## Add moves a planet by a certain amount
-    def move(self, step):
-        self.__pos += step
-        self.__vel += self.__accel*timeScale
+    def move(self):
+        self.__vel += self.getAccel()*timeScale
+        self.__pos += self.getVel()
 
     ## End of getters and setters
 
