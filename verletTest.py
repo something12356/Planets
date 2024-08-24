@@ -4,7 +4,7 @@ import numpy as np
 ## Time-scale, how much vel and position should change per tick
 ## Lower value = slower but more accurate simulation
 YEAR = 315576
-timeScale = 0 * YEAR
+timeScale = 0.01 * YEAR
 ## The distance constant is used to translate SI units (metres) into pixels.
 ## 2 * 10**-12 means that the earth is about 30 pixels from the sun.
 distScale = 4 * 10**-9
@@ -148,6 +148,8 @@ def focusAdjustment(planets, comFocus, freeCam, camera):
     #         line[0] += focusDisplacement
     #         line[1] += focusDisplacement
 
+## Works out initial acceleration between planets for an accurate start to the simulation
+## Without this planets start moving with no acceleration, which causes a few issues
 def initialAcceleration(planets):
     for p1 in planets:
         for p2 in planets[planets.index(p1)+1:]:
@@ -162,16 +164,18 @@ def initialAcceleration(planets):
 
 def simulateTick(arrowsToDraw, planets):
     for p1 in planets:
+        ## Verlet integrates velocity
+        p1.verletVelocity(p1.getAccel())
+        ## Verlet integrates position
         ## Takes position before and after so that the lines for the orbits can be drawn
         beforePos = np.copy(p1.getPos())
-        p1.move(timeScale*p1.getVel())
+        p1.verletPosition(p1.getVel())
         afterPos = np.copy(p1.getPos())
         p1.addLine([beforePos,afterPos,p1.getColour()])
-        print(p1.getVel())
         for p2 in planets[planets.index(p1)+1:]:
             p1p2gravity = p1.gravity(p2)
+            strength = mag(p1p2gravity)
             p1.addForce(p1p2gravity)
-
             ## Draws force arrows showing the forces acting on the planet
             if planets.index(p1) == focus and not comFocus:
                 arrowsToDraw.append(["white", p1, np.copy(p1p2gravity)])
@@ -179,16 +183,14 @@ def simulateTick(arrowsToDraw, planets):
                 arrowsToDraw.append(["white", p2, -1*np.copy(p1p2gravity)])
             ## Can take away here due to Newton's third law, each force has equal and opposite reaction force
             p2.addForce(-p1p2gravity)
-        print(p1.getVel())
-        print('---')
-
         if planets.index(p1) == focus and not comFocus:
             arrowsToDraw.append([p1.getColour(), p1, np.copy(p1.getResultant())])
             arrowsToDraw.append(np.copy(p1.getResultant()))
+        ## Acceleration is updated and then velocity is integrated again.
         p1.secondLaw(p1.getResultant())
-        ## Reset the resultant to 0 so it can be calculated again next tick
+        p1.verletVelocity(p1.getAccel())
+        ## Resets the resultant to 0 so it can be calculated again next tick
         p1.addForce(-p1.getResultant())
-
     return arrowsToDraw
 
 ## Takes in vector, returns False if within the screen, True otherwise
@@ -228,7 +230,7 @@ class celestialBody:
 
     def getVel(self):
         return self.__vel
-    
+
     def getAccel(self):
         return self.__accel
 
@@ -263,7 +265,19 @@ class celestialBody:
     ## Add moves a planet by a certain amount
     def move(self, step):
         self.__pos += step
-        self.__vel += self.__accel*timeScale
+
+    def accelerate(self, step):
+        self.__vel += step
+
+    ## Uses velocity verlet to update position
+    def verletPosition(self, velocity):
+        self.move(velocity*timeScale)
+
+    ## Velocity is updated twice in the code, once before and once after acceleration has been updated
+    ## This is in effect taking the average of acceleration before and after the tick
+    ## This creates a "smoothing" effect that makes the simulation more accurate
+    def verletVelocity(self, acceleration):
+        self.accelerate(acceleration*timeScale*0.5)
 
     ## End of getters and setters
 

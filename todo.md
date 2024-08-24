@@ -3,8 +3,10 @@
 - [x] Arrows: Resultant be fixed amount of size, e.g. 1.5*size + 10 or something. Scale everything else according to that. Might not be a good idea though? Maybe just leave as is, it works well!
 - [ ] Polymorphism with celestial body class, asteroid, planet and sun inherit. Asteroids should receive less simulation time because they *will* lag it otherwise lmao. Also asteroids do NOT get orbital lines!!
 - [ ] Try including composition / aggregation somewhere? Idk how it'd work, maybe when launching rockets or something they could be created by the planet they're launched from.
+- [ ] PRIVATE VARIABLES!
 - [x] x=0,y=1 indexing? To make coordinates make more sense. Or X Y.
 - [x] Button to switch focus. I.e. comDisplacement becomes focusDisplacement.
+- [ ] **SEE OBJECTIVES**
 - [ ] Optimisation, e.g. not drawing things that are off-screen.
 - [ ] Add support for varying screen sizes (pygame should have an autodetect thing?).
 - [ ] CHECK KE, MOMENTUM IS CONSERVED
@@ -12,6 +14,7 @@
 - [ ] Planet choices but also *presets*
 	- [ ] CONFIG FILE!
 	- [ ] More constants for configurable things
+	- [ ] Sliders for changing planets mass (Yicong's idea: INCREASE RADIUS AT SAME TIME TO INDICATE IT)
 - [ ] UI FOR CHANGING THINGS LIKE G, SPEED, ETC
 - [x] Change more stuff into functions, should be very modular and easy to change.
 	- [x] E.g. make DrawLines() a function, shift everything to the focus a function, make simulating law of gravity on planets a function, just wrap it up, main loop should really be quite small running the few main functions and nothing else.
