@@ -163,11 +163,6 @@ def initialAcceleration(planets):
 def simulateTick(arrowsToDraw, planets):
     for p1 in planets:
         ## Takes position before and after so that the lines for the orbits can be drawn
-        beforePos = np.copy(p1.getPos())
-        p1.move(timeScale*p1.getVel())
-        afterPos = np.copy(p1.getPos())
-        p1.addLine([beforePos,afterPos,p1.getColour()])
-        print(p1.getVel())
         for p2 in planets[planets.index(p1)+1:]:
             p1p2gravity = p1.gravity(p2)
             p1.addForce(p1p2gravity)
@@ -179,13 +174,16 @@ def simulateTick(arrowsToDraw, planets):
                 arrowsToDraw.append(["white", p2, -1*np.copy(p1p2gravity)])
             ## Can take away here due to Newton's third law, each force has equal and opposite reaction force
             p2.addForce(-p1p2gravity)
-        print(p1.getVel())
-        print('---')
 
         if planets.index(p1) == focus and not comFocus:
             arrowsToDraw.append([p1.getColour(), p1, np.copy(p1.getResultant())])
             arrowsToDraw.append(np.copy(p1.getResultant()))
+  
         p1.secondLaw(p1.getResultant())
+        beforePos = np.copy(p1.getPos())
+        p1.move(timeScale*p1.getVel())
+        afterPos = np.copy(p1.getPos())
+        p1.addLine([beforePos,afterPos,p1.getColour()])  
         ## Reset the resultant to 0 so it can be calculated again next tick
         p1.addForce(-p1.getResultant())
 
