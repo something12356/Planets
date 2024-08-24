@@ -159,19 +159,13 @@ def initialAcceleration(planets):
             p2.addForce(-p1p2gravity)
         ## Acceleration is updated
         p1.secondLaw(p1.getResultant())
+        p1.move(p1.getVel()*timeScale + 0.5*p1.getAccel()*timeScale*timeScale)
+        p1.verletVelocity(p1.getPos(), p1.getOldPos())
         ## Resets the resultant to 0 so it can be calculated again next tick
         p1.addForce(-p1.getResultant())
 
 def simulateTick(arrowsToDraw, planets):
     for p1 in planets:
-        ## Verlet integrates velocity
-        p1.verletVelocity(p1.getAccel())
-        ## Verlet integrates position
-        ## Takes position before and after so that the lines for the orbits can be drawn
-        beforePos = np.copy(p1.getPos())
-        p1.verletPosition(p1.getVel())
-        afterPos = np.copy(p1.getPos())
-        p1.addLine([beforePos,afterPos,p1.getColour()])
         for p2 in planets[planets.index(p1)+1:]:
             p1p2gravity = p1.gravity(p2)
             strength = mag(p1p2gravity)
@@ -186,9 +180,15 @@ def simulateTick(arrowsToDraw, planets):
         if planets.index(p1) == focus and not comFocus:
             arrowsToDraw.append([p1.getColour(), p1, np.copy(p1.getResultant())])
             arrowsToDraw.append(np.copy(p1.getResultant()))
-        ## Acceleration is updated and then velocity is integrated again.
+        ## Force on the planet is updated.
         p1.secondLaw(p1.getResultant())
-        p1.verletVelocity(p1.getAccel())
+        ## verletPosition() integrates position
+        ## Takes position before and after so that the lines for the orbits can be drawn
+        beforePos = np.copy(p1.getPos())
+        p1.verletPosition(p1.getPos(), p1.getOldPos(), p1.getAccel())
+        p1.verletVelocity(p1.getPos(), p1.getOldPos())
+        afterPos = np.copy(p1.getPos())
+        p1.addLine([beforePos,afterPos,p1.getColour()])
         ## Resets the resultant to 0 so it can be calculated again next tick
         p1.addForce(-p1.getResultant())
     return arrowsToDraw
@@ -204,6 +204,7 @@ class celestialBody:
         self.__size = size
         self.__vel = vel
         self.__mass = mass
+        self.__oldPos = np.array([0.0,0.0])
         self.__pos = pos
         self.__colour = colour
         self.__accel = 0
@@ -212,6 +213,9 @@ class celestialBody:
     
     ## All the getters and setters
     def getPos(self):
+        return self.__pos
+
+    def getOldPos(self):
         return self.__pos
 
     def getLogPos(self):
@@ -264,20 +268,24 @@ class celestialBody:
     ## Sets position
     ## Add moves a planet by a certain amount
     def move(self, step):
-        self.__pos += step
+        self.__pos, self.__oldPos = self.__pos+step, self.__pos
 
     def accelerate(self, step):
         self.__vel += step
 
     ## Uses velocity verlet to update position
-    def verletPosition(self, velocity):
-        self.move(velocity*timeScale)
+    def verletPosition(self, pos, oldPos, acceleration):
+        self.move(pos - oldPos + 0.5*timeScale*timeScale*acceleration)
 
-    ## Velocity is updated twice in the code, once before and once after acceleration has been updated
-    ## This is in effect taking the average of acceleration before and after the tick
-    ## This creates a "smoothing" effect that makes the simulation more accurate
-    def verletVelocity(self, acceleration):
-        self.accelerate(acceleration*timeScale*0.5)
+    ## Saves old acceleration
+    ## Works out new acceleration
+    ## Takes the average and adds it to the velocity
+    ## This smooths out the movement of planets and makes the simulation more accurate
+    def verletVelocity(self, pos, oldPos):
+        self.__vel = pos - oldPos
+        print(self.__vel)
+        if self != sun:
+            input("")
 
     ## End of getters and setters
 

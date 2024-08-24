@@ -148,18 +148,6 @@ def focusAdjustment(planets, comFocus, freeCam, camera):
     #         line[0] += focusDisplacement
     #         line[1] += focusDisplacement
 
-def initialAcceleration(planets):
-    for p1 in planets:
-        for p2 in planets[planets.index(p1)+1:]:
-            p1p2gravity = p1.gravity(p2)
-            p1.addForce(p1p2gravity)
-            ## Can take away here due to Newton's third law, each force has equal and opposite reaction force
-            p2.addForce(-p1p2gravity)
-        ## Acceleration is updated
-        p1.secondLaw(p1.getResultant())
-        ## Resets the resultant to 0 so it can be calculated again next tick
-        p1.addForce(-p1.getResultant())
-
 def simulateTick(arrowsToDraw, planets):
     for p1 in planets:
         ## Takes position before and after so that the lines for the orbits can be drawn
@@ -178,10 +166,11 @@ def simulateTick(arrowsToDraw, planets):
         if planets.index(p1) == focus and not comFocus:
             arrowsToDraw.append([p1.getColour(), p1, np.copy(p1.getResultant())])
             arrowsToDraw.append(np.copy(p1.getResultant()))
-  
+
         p1.secondLaw(p1.getResultant())
         beforePos = np.copy(p1.getPos())
-        p1.move(timeScale*p1.getVel())
+        ## Uses verlet integration to update velocity and acceleration of planet
+        p1.verletPosition()
         afterPos = np.copy(p1.getPos())
         p1.addLine([beforePos,afterPos,p1.getColour()])  
         ## Reset the resultant to 0 so it can be calculated again next tick
@@ -258,10 +247,10 @@ class celestialBody:
         self.__accel = force/self.getMass()
    
     ## Sets position
-    ## Add moves a planet by a certain amount
-    def move(self):
+    ## Updates velocity and then moves a planet by its velocity
+    def verletPosition(self):
         self.__vel += self.getAccel()*timeScale
-        self.__pos += self.getVel()
+        self.__pos += self.getVel()*timeScale
 
     ## End of getters and setters
 
@@ -338,8 +327,6 @@ comFocus = False
 freeCam = False
 arrows = False
 camera = np.array([0.0, 0.0])
-
-initialAcceleration(planets)
 
 while running:
     screen.fill((0,0,0))
