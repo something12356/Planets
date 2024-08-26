@@ -4,14 +4,11 @@ import numpy as np
 ## Time-scale, how much vel and position should change per tick
 ## Lower value = slower but more accurate simulation
 YEAR = 315576
-timeScale = 0 * YEAR
+timeScale = 1
 ## The distance constant is used to translate SI units (metres) into pixels.
 ## 2 * 10**-12 means that the earth is about 30 pixels from the sun.
 distScale = 4 * 10**-9
 zoomScale = distScale
-## "Warping" means subtracting a constant distance from a planets distance from the sun
-## when displaying the planet. This avoids having a huge gap between the sun and Mercury.
-WARP_DISTANCE = 5.75 * 10**10
 x = 0
 y = 1
 ## Gravitational constant, defines how strong gravity is. Real life G = 
@@ -71,7 +68,7 @@ def logPos(vector, planet=None, takeIntoAccountSize=False, warp=True):
 
 ## Takes in a position vector and outputs that vector from the centre of mass scaled by the distance constant.
 ## This way if a planet is 150 million km from the sun, it can be displayed as x amount of pixels from the sun.
-def scaledPos(vector, warp=True):
+def scaledPos(vector):
     comVector = vector - com(planets)
     return com(planets) + distScale * comVector
 
@@ -134,10 +131,12 @@ def com(planets):
 
 def focusAdjustment(planets, comFocus, freeCam, camera):
     if freeCam:
-        focusDisplacement = centre - camera
+        focusDisplacement = centre - camera.getPos()
+        print(freeCam)
     else:
         if comFocus:
             focusDisplacement = centre - scaledPos(com(planets))
+            print("HII")
         else:
             focusDisplacement = centre - planets[focus].getScaledPos()
     return focusDisplacement
@@ -183,6 +182,19 @@ def offscreen(vec):
     if vec[x] > 0 and vec[x] < 1920 and vec[y] > 0 and vec[y] < 1080:
         return False
     return True
+
+class Camera:
+    def __init__(self):
+        self.__pos = np.array([0.0,0.0])
+
+    def getPos(self):
+        return self.__pos
+
+    def setPos(self, pos):
+        self.__pos = pos
+
+    def move(self, step):
+        self.__pos += step
 
 class celestialBody:
     def __init__(self, size, vel, mass, pos, colour):
@@ -315,6 +327,7 @@ saturn = planet(5.823 * 10**7, np.array([0.0, 9.69 * 10**3]), 5.683 * 10**26, np
 uranus = planet(2.536 * 10**7, np.array([0.0, 6.81 * 10**3]), 8.681 * 10**25, np.array([2.9 * 10**12, centre[x]]), (98, 174, 230))
 neptune = planet(2.462 * 10**7, np.array([0.0, 5.43 * 10**3]), 1.024 * 10 ** 26, np.array([4.503 * 10**12, centre[x]]), (67, 109, 252))
 planets = [sun, mercury, venus, earth, moon, mars, jupiter, saturn, uranus, neptune]
+camera = Camera()
 
 LINE_LENGTH = int(MAX_LINES / len(planets))
 pygame.init()
@@ -326,7 +339,6 @@ focus = 0
 comFocus = False
 freeCam = False
 arrows = False
-camera = np.array([0.0, 0.0])
 
 while running:
     screen.fill((0,0,0))
@@ -338,27 +350,27 @@ while running:
             if event.key == pygame.K_RIGHT:
                 focus = (focus+1)%len(planets)
                 freeCam = False
-            if event.key == pygame.K_LEFT:
+            elif event.key == pygame.K_LEFT:
                 focus = (focus-1)%len(planets)
                 freeCam = False
-            if event.key == pygame.K_UP:
+            elif event.key == pygame.K_UP:
                 timeScale += 0.1*YEAR
-            if event.key == pygame.K_DOWN:
+            elif event.key == pygame.K_DOWN:
                 timeScale -= 0.1*YEAR
-            if event.key == pygame.K_SPACE:
+            elif event.key == pygame.K_SPACE:
                 ## Toggles whether or not the screen is centered on the centre of mass
                 comFocus = not comFocus
+                if freeCam:
+                    comFocus = True
                 freeCam = False
-            if event.key == pygame.K_f:
+            elif event.key == pygame.K_f:
                 arrows = not arrows
-            # if event.key == pygame.K_w or pygame.K_s or pygame.K_a or pygame.K_d:
-            #     camera = focusAdjustment(planets, comFocus, freeCam, camera)
-            #     print(camera)
-            #     freeCam = True
-            if event.key == pygame.K_a:
-                G -= 0.1*G
-            if event.key == pygame.K_e:
-                G += 0.1*G
+            if event.key == pygame.K_w or event.key == pygame.K_s or event.key == pygame.K_a or event.key == pygame.K_d:
+                print('----------')
+                print('----------')
+                print('----------')
+                camera.setPos(centre - focusAdjustment(planets, comFocus, freeCam, camera))
+                freeCam = True
         if event.type == pygame.MOUSEWHEEL:
             if event.y == 1:
                 if zoomScale < distScale:
