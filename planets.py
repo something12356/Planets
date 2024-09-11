@@ -1,6 +1,8 @@
 import math as maths
 import pygame
 import numpy as np
+import vectors as vec
+
 ## Time-scale, how much vel and position should change per tick
 ## Lower value = slower but more accurate simulation
 YEAR = 315576
@@ -20,23 +22,6 @@ MAX_LINES = 200
 ## Centre of screen
 centre = np.array([960.0,540.0])
 
-## Finds the magnitude of a vector (np array)
-def mag(vec):
-    mag = sum([i**2 for i in vec])
-    return maths.sqrt(mag)
-
-## Returns a vector with the same direction as the input of length 1
-def unit(vec):
-    if mag(vec) == 0:
-        return vec
-    return vec*(1/mag(vec))
-
-## Returns a direction vector (a vector of unit length 1 so it can easily be scaled) that is perpendicular to input line
-## By taking the "negative reciprocal", swapping the values and multiplying one of them by -1
-def normal(vector):
-    normal = np.array([-1*vector[y],vector[x]])
-    return unit(normal)
-
 ## Switching from one zoom to another instantly is very jarring. 
 ## This uses interpolation to smoothly transition between zooms.
 ## I could use linear interpolation but I actually think this non-linear thing looks nicer so I'm using that.
@@ -47,24 +32,24 @@ def zoom(distScale, zoomScale):
 def logPos(vector, planet=None, takeIntoAccountSize=False, warp=True):
     comVector = vector - com(planets)
     if warp:
-        if mag(comVector) > WARP_DISTANCE:
-            comVector = comVector - WARP_DISTANCE*unit(comVector)
+        if vec.mag(comVector) > WARP_DISTANCE:
+            comVector = comVector - WARP_DISTANCE*vec.unit(comVector)
             if planet == mercury:
-                print(mag(comVector))
+                print(vec.mag(comVector))
     # takeIntoAccountSize means that the program considers the distance from the centre of mass
     # to the edge of a planet, rather than its centre.
     if takeIntoAccountSize:
-        if mag(comVector) <= planet.getSize():
+        if vec.mag(comVector) <= planet.getSize():
             if planet == mercury:
                 input("")
             comVector = np.array([0.0,0.0])
         else:
-            comVector = comVector - planet.getSize()*unit(comVector)
+            comVector = comVector - planet.getSize()*vec.unit(comVector)
     # if debug:
     #     print(planet.getColour())
-    #     print(mag(comVector))
+    #     print(vec.mag(comVector))
     #     print('---')
-    return com(planets) + maths.log(mag(comVector)+1, 10)*unit(comVector)*distScale
+    return com(planets) + maths.log(vec.mag(comVector)+1, 10)*vec.unit(comVector)*distScale
 
 ## Takes in a position vector and outputs that vector from the centre of mass scaled by the distance constant.
 ## This way if a planet is 150 million km from the sun, it can be displayed as x amount of pixels from the sun.
@@ -74,11 +59,11 @@ def scaledPos(vector):
 
 ## Draws an arrow by drawing a line, picking two points either side of that line, and drawing lines from the end of the first line to those two points
 def drawArrow(colour, startPos, endPos):
-    vec = endPos - startPos
-    length = mag(vec)
+    vector = endPos - startPos
+    length = vec.mag(vector)
     pygame.draw.aaline(screen, colour, startPos, endPos)
     ## Generating the two points either side of the line
-    norm = normal(vec)
+    norm = vec.normal(vector)
     p1 = startPos + 0.8*vec + 0.15*length*norm
     p2 = startPos + 0.8*vec - 0.15*length*norm
     pygame.draw.aaline(screen, colour, p1, endPos)
@@ -91,12 +76,12 @@ def displayArrows(arrowsToDraw, adjustment):
         arrow = arrowsToDraw.pop(0)
         p = arrow[1]
         if arrow[0] != "white":
-            # print("RESULTANT:", abs(maths.log(mag(forceToDraw)+1,1000))*240*mag(arrow[2]), abs(arrow[3]))
-            drawArrow(arrow[0], p.getScaledPos()+adjustment, p.getScaledPos()+(10**-12)*distScale*arrow[2]/(maths.log(p.getMass()))+p.getSize()*distScale*unit(arrow[2])+adjustment)
+            # print("RESULTANT:", abs(maths.log(vec.mag(forceToDraw)+1,1000))*240*vec.mag(arrow[2]), abs(arrow[3]))
+            drawArrow(arrow[0], p.getScaledPos()+adjustment, p.getScaledPos()+(10**-12)*distScale*arrow[2]/(maths.log(p.getMass()))+p.getSize()*distScale*vec.unit(arrow[2])+adjustment)
             print(arrow[2]*distScale*10**-12/(maths.log(p.getMass())))
         else:
-            # print("COMPONENT:", abs(maths.log(mag(forceToDraw)+1,1000))*240*mag(arrow[2]), abs(arrow[3]))
-            drawArrow(arrow[0], p.getScaledPos()+adjustment, p.getScaledPos()+(10**-12)*distScale*arrow[2]/(maths.log(p.getMass()))+(p.getSize()*distScale)*unit(arrow[2])+adjustment)
+            # print("COMPONENT:", abs(maths.log(vec.mag(forceToDraw)+1,1000))*240*vec.mag(arrow[2]), abs(arrow[3]))
+            drawArrow(arrow[0], p.getScaledPos()+adjustment, p.getScaledPos()+(10**-12)*distScale*arrow[2]/(maths.log(p.getMass()))+(p.getSize()*distScale)*vec.unit(arrow[2])+adjustment)
 
 def displayLines(planets, adjustment):
     for p in planets:
@@ -178,8 +163,8 @@ def simulateTick(arrowsToDraw, planets):
     return arrowsToDraw
 
 ## Takes in vector, returns False if within the screen, True otherwise
-def offscreen(vec):
-    if vec[x] > 0 and vec[x] < 1920 and vec[y] > 0 and vec[y] < 1080:
+def offscreen(vector):
+    if vector[x] > 0 and vector[x] < 1920 and vector[y] > 0 and vector[y] < 1080:
         return False
     return True
 
@@ -270,9 +255,9 @@ class celestialBody:
     ## Breaks it into components by doing F*adj/hyp, F*opp/hyp (Fcos(a) and Fsin(a))
     def gravity(self, planet2):
         r = planet2.getPos() - self.getPos()
-        F = G*(self.getMass()*planet2.getMass())/(mag(r)**2)
-        Fx = F*r[x]/mag(r)
-        Fy = F*r[y]/mag(r)
+        F = G*(self.getMass()*planet2.getMass())/(vec.mag(r)**2)
+        Fx = F*r[x]/vec.mag(r)
+        Fy = F*r[y]/vec.mag(r)
         return np.array([Fx,Fy])
 
 class planet(celestialBody):
