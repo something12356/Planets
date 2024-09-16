@@ -132,7 +132,7 @@ def focusAdjustment(planets, comFocus, freeCam, camera):
     #         line[0] += focusDisplacement
     #         line[1] += focusDisplacement
 
-def simulateTick(arrowsToDraw, planets):
+def simulateTick(arrowsToDraw, planets, focus, comFocus):
     for p1 in planets:
         ## Takes position before and after so that the lines for the orbits can be drawn
         for p2 in planets[planets.index(p1)+1:]:
@@ -256,9 +256,7 @@ class celestialBody:
     def gravity(self, planet2):
         r = planet2.getPos() - self.getPos()
         F = G*(self.getMass()*planet2.getMass())/(vec.mag(r)**2)
-        Fx = F*r[x]/vec.mag(r)
-        Fy = F*r[y]/vec.mag(r)
-        return np.array([Fx,Fy])
+        return np.array([F*i/vec.mag(r) for i in r])
 
 class planet(celestialBody):
     pass
@@ -367,7 +365,7 @@ while running:
                 zoomScale -= 0.4*zoomScale
 
     ## Works out gravitational force between all planets and moves them according each tick
-    arrowsToDraw = simulateTick(arrowsToDraw, planets)
+    arrowsToDraw = simulateTick(arrowsToDraw, planets, focus, comFocus)
     distScale = zoom(distScale, zoomScale)
     ## focusAdjustment makes it so that the screen follows whichever planet the user wants to look at
     ## Alternatively, follows the centre of mass, useful for binary star systems
