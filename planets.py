@@ -168,9 +168,17 @@ def offscreen(vector):
         return False
     return True
 
+## NASA's data on the solar system is all given in 3 dimensional coordinates
+## So a simulation of 3d space is used for this program. It also leads to a more accurate model.
+## However, displaying 3d graphics is computationally intensive. Therefore, a 2d projection is used for display instead.
+## The projection itself is rather simple because the chosen plane is the x,y plane. Simply take the x and y coordinates.
+## However, planets also need to be shrunk. This is done by calculating their distance to the camera.
+def scaleSize(vector, size):
+
+
 class Camera:
     def __init__(self):
-        self.__pos = np.array([0.0,0.0])
+        self.__pos = np.array([0.0,0.0,0.0])
 
     def getPos(self):
         return self.__pos
@@ -292,7 +300,7 @@ class satellite(celestialBody):
             self.__lines = self.__lines[len(self.__lines)-LINE_LENGTH:]
 
 sun = planet(6.955 * 10**8, np.array([0.0,0.0,0.0]),1.99 * 10**30, np.array([960.0, 540.0, 0.0]),(255,255,0))
-mercury = planet(2.440 * 10**6, np.array([0.0, 4.787 * 10**4, 0.0]), 3.301 * 10**23, np.array([5.791 * 10**10, centre[x], 10**100.0]), (65,68,74))
+mercury = planet(2.440 * 10**6, np.array([0.0, 4.787 * 10**4, 0.0]), 3.301 * 10**23, np.array([5.791 * 10**10, centre[x], 10000000000.0]), (65,68,74))
 # venus = planet(6.052 * 10**6, np.array([0.0, 3.502 * 10**4]),4.867 * 10**24, np.array([1.08 * 10**11, centre[x]]),(139,115,85))
 # earth = planet(6.371 * 10 **6,np.array([0.0, 2.978 * 10**4]),5.972 * 10**24, np.array([1.496 * 10**11, centre[x]]),(0,0,255))
 # moon = satellite(1.738 * 10**6, np.array([0.0, 2.978*10**4+1.022*10**3]),7.348 * 10**22, np.array([1.496 * 10**11 - 3.63*10**8, centre[x]]),(153,153,153), earth)
@@ -369,4 +377,5 @@ while running:
     displayPlanets(planets, focusAdjustment(planets, comFocus, freeCam, camera))
 
     pygame.display.flip()
+    print(mercury.getPos())
     clock.tick(120)
