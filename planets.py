@@ -20,7 +20,7 @@ G = 6.6743015*10**-11
 MAX_LINES = 200
 
 ## Centre of screen
-centre = np.array([960.0,540.0])
+centre = np.array([960.0,540.0,0.0])
 
 ## Switching from one zoom to another instantly is very jarring. 
 ## This uses interpolation to smoothly transition between zooms.
@@ -93,7 +93,7 @@ def displayLines(planets, adjustment):
             ## Index ratio is used to reduce opacity and thickness of the older lines 
             ## An index counter is used as python cannot find the index of np arrays with multiple elements
             indexRatio = index/len(p.getLines())
-            pygame.draw.aaline(screen,([int(indexRatio*line[2][i]) for i in range(3)]),scaledPos(line[0])+adjustment,scaledPos(line[1])+adjustment,int(indexRatio*255))
+            pygame.draw.aaline(screen,([int(indexRatio*line[2][i]) for i in range(3)]),scaledPos(line[0])[:2]+adjustment[:2],scaledPos(line[1])[:2]+adjustment[:2],int(indexRatio*255))
         
 def displayPlanets(planets, adjustment):
     for p in planets:
@@ -103,11 +103,11 @@ def displayPlanets(planets, adjustment):
         #     print(p.getLogPos())
         ## Don't draw planet if small
         if p.getSize()*distScale > 10**-2:
-            pygame.draw.circle(screen,p.getColour(),p.getScaledPos()+adjustment,p.getSize()*distScale)
+            pygame.draw.circle(screen,p.getColour(),p.getScaledPos()[:2]+adjustment[:2],p.getSize()*distScale)
 
 ## Finds the centre of mass of the sysetm
 def com(planets):
-    com = np.array([0.0,0.0])
+    com = np.array([0.0,0.0,0.0])
     mass = 0
     for p in planets:
         com += p.getMass()*p.getPos()
@@ -291,25 +291,17 @@ class satellite(celestialBody):
         if len(self.__lines) > LINE_LENGTH:
             self.__lines = self.__lines[len(self.__lines)-LINE_LENGTH:]
 
-## All the planets being defined
-# sun1 = planet(30,np.array([0.0,0.0]),4000,np.array([960.0,780.0]),(0,255,255))
-# sun2 = planet(30,np.array([0.0,0.0]),4000,np.array([960.0,300.0]),(0,255,255))
-# # sun3 = planet(30,np.array([0.0,0.0]),4000,np.array([1800.0,540.0]),"red")
-# # sun4 = planet(30,np.array([0.0,0.0]),4000,np.array([120.0,540.0]),"red")
-# earth = planet(5,np.array([0.3,0.0]),1,np.array([960.0,50.0]),(0,0,255))
-# planets = [sun1,sun2,earth]
-
-sun = planet(6.955 * 10**8, np.array([0.0,0.0]),1.99 * 10**30, np.array([960.0, 540.0]),(255,255,0))
-mercury = planet(2.440 * 10**6, np.array([0.0, 4.787 * 10**4]), 3.301 * 10**23, np.array([5.791 * 10**10, centre[x]]), (65,68,74))
-venus = planet(6.052 * 10**6, np.array([0.0, 3.502 * 10**4]),4.867 * 10**24, np.array([1.08 * 10**11, centre[x]]),(139,115,85))
-earth = planet(6.371 * 10 **6,np.array([0.0, 2.978 * 10**4]),5.972 * 10**24, np.array([1.496 * 10**11, centre[x]]),(0,0,255))
-moon = satellite(1.738 * 10**6, np.array([0.0, 2.978*10**4+1.022*10**3]),7.348 * 10**22, np.array([1.496 * 10**11 - 3.63*10**8, centre[x]]),(153,153,153), earth)
-mars = planet(3.390 * 10**6, np.array([0.0, 2.408 * 10**4]), 6.417 * 10**23, np.array([2.28 * 10**11, centre[x]]), (255,99,47))
-jupiter = planet(6.991 * 10**7, np.array([0.0, 1.307 * 10**4]), 1.898 * 10 ** 27, np.array([7.749 * 10**11, centre[x]]), (250, 164, 87))
-saturn = planet(5.823 * 10**7, np.array([0.0, 9.69 * 10**3]), 5.683 * 10**26, np.array([1.418 * 10**12, centre[x]]), (195, 146, 79))
-uranus = planet(2.536 * 10**7, np.array([0.0, 6.81 * 10**3]), 8.681 * 10**25, np.array([2.9 * 10**12, centre[x]]), (98, 174, 230))
-neptune = planet(2.462 * 10**7, np.array([0.0, 5.43 * 10**3]), 1.024 * 10 ** 26, np.array([4.503 * 10**12, centre[x]]), (67, 109, 252))
-planets = [sun, mercury, venus, earth, moon, mars, jupiter, saturn, uranus, neptune]
+sun = planet(6.955 * 10**8, np.array([0.0,0.0,0.0]),1.99 * 10**30, np.array([960.0, 540.0, 0.0]),(255,255,0))
+mercury = planet(2.440 * 10**6, np.array([0.0, 4.787 * 10**4, 0.0]), 3.301 * 10**23, np.array([5.791 * 10**10, centre[x], 10**100.0]), (65,68,74))
+# venus = planet(6.052 * 10**6, np.array([0.0, 3.502 * 10**4]),4.867 * 10**24, np.array([1.08 * 10**11, centre[x]]),(139,115,85))
+# earth = planet(6.371 * 10 **6,np.array([0.0, 2.978 * 10**4]),5.972 * 10**24, np.array([1.496 * 10**11, centre[x]]),(0,0,255))
+# moon = satellite(1.738 * 10**6, np.array([0.0, 2.978*10**4+1.022*10**3]),7.348 * 10**22, np.array([1.496 * 10**11 - 3.63*10**8, centre[x]]),(153,153,153), earth)
+# mars = planet(3.390 * 10**6, np.array([0.0, 2.408 * 10**4]), 6.417 * 10**23, np.array([2.28 * 10**11, centre[x]]), (255,99,47))
+# jupiter = planet(6.991 * 10**7, np.array([0.0, 1.307 * 10**4]), 1.898 * 10 ** 27, np.array([7.749 * 10**11, centre[x]]), (250, 164, 87))
+# saturn = planet(5.823 * 10**7, np.array([0.0, 9.69 * 10**3]), 5.683 * 10**26, np.array([1.418 * 10**12, centre[x]]), (195, 146, 79))
+# uranus = planet(2.536 * 10**7, np.array([0.0, 6.81 * 10**3]), 8.681 * 10**25, np.array([2.9 * 10**12, centre[x]]), (98, 174, 230))
+# neptune = planet(2.462 * 10**7, np.array([0.0, 5.43 * 10**3]), 1.024 * 10 ** 26, np.array([4.503 * 10**12, centre[x]]), (67, 109, 252))
+planets = [sun, mercury]
 camera = Camera()
 
 LINE_LENGTH = int(MAX_LINES / len(planets))
