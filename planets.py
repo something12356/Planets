@@ -8,7 +8,7 @@ import vectors as vec
 YEAR = 315576
 timeScale = 1
 ## The distance constant is used to translate SI units (metres) into pixels.
-## 2 * 10**-12 means that the earth is about 30 pixels from the sun.
+## 2 * 10**-12 means that the earth is about 30 pixels from the sun, for reference.
 distScale = 4 * 10**-9
 zoomScale = distScale
 x = 0
@@ -173,7 +173,9 @@ def offscreen(vector):
 ## However, displaying 3d graphics is computationally intensive. Therefore, a 2d projection is used for display instead.
 ## The projection itself is rather simple because the chosen plane is the x,y plane. Simply take the x and y coordinates.
 ## However, planets also need to be shrunk. This is done by calculating their distance to the camera.
+## The camera's z position is 960 / d
 def scaleSize(vector, size):
+    
 
 
 class Camera:
