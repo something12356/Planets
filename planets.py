@@ -174,9 +174,6 @@ def offscreen(vector):
 ## The projection itself is rather simple because the chosen plane is the x,y plane. Simply take the x and y coordinates.
 ## However, planets also need to be shrunk. This is done by calculating their distance to the camera.
 ## The camera's z position is 960 / d
-def scaleSize(vector, size):
-    
-
 
 class Camera:
     def __init__(self):
@@ -301,7 +298,7 @@ class satellite(celestialBody):
         if len(self.__lines) > LINE_LENGTH:
             self.__lines = self.__lines[len(self.__lines)-LINE_LENGTH:]
 
-sun = planet(6.955 * 10**8, np.array([0.0,0.0,0.0]),1.99 * 10**30, np.array([960.0, 540.0, 0.0]),(255,255,0))
+sun = planet(695700.0 * 10**3, np.array([11.41, -8.292, -0.1685]),1988500.0 * 10 ** 24, np.array([-9.675 * 10 ** 8, -6.663 * 10 ** 8, 2.857 * 10 ** 7]),(255,255,0))
 mercury = planet(2.440 * 10**6, np.array([0.0, 4.787 * 10**4, 0.0]), 3.301 * 10**23, np.array([5.791 * 10**10, centre[x], 10000000000.0]), (65,68,74))
 # venus = planet(6.052 * 10**6, np.array([0.0, 3.502 * 10**4]),4.867 * 10**24, np.array([1.08 * 10**11, centre[x]]),(139,115,85))
 # earth = planet(6.371 * 10 **6,np.array([0.0, 2.978 * 10**4]),5.972 * 10**24, np.array([1.496 * 10**11, centre[x]]),(0,0,255))
