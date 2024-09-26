@@ -1,10 +1,6 @@
 import requests
 import numpy as np
 import datetime
-startTime = datetime.datetime.now().strftime("%Y-%m-%d")
-stopTime = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-response = requests.get("https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='399'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&START_TIME='"+startTime+"'&STOP_TIME='"+stopTime+"'&CENTER='500@0'&STEP_SIZE='1%20d'&QUANTITIES='1,9,20,23,24,29'")
-print(response.text)
 
 ## Sometimes NASA puts a scale next to their units (e.g. they might say mass is measured as 10^23 kg)
 ## If the scale is expected, it is found and the value is multiplied by it.
@@ -44,30 +40,40 @@ def extractValue(text, expectingScale=False, conversionFactor=1):
 
     return scale*value*conversionFactor
 
-position = np.array([0.0, 0.0, 0.0])
-velocity = np.array([0.0, 0.0, 0.0])
-count = 0
-for i in range(len(response.text)):
-    # Mass is in kg, so no multiplying by a factor of 10 is needed
-    if response.text[i:i+6] == 'Mass x' or response.text[i:i+5] == 'Mass, ':
-        mass = extractValue(response.text[i:i+40],True)
-    ## Thankfully radius is the same for both planets and the sun, so it can just be extracted the same way
-    if response.text[i:i+16] == 'Vol. mean radius':
-        radius = extractValue(response.text[i:i+40], False, 1000)
-    
-    if response.text[i:i+3] in ['X =','Y =','Z =','VX=','VY=','VZ=']:
-        if count < 3:
-            position[count] = extractValue(response.text[i:i+40], False, 1000)
-            print(response.text[i:i+3])
-        else:
-            velocity[count-3] = extractValue(response.text[i:i+40], False, 1000)
-        if count == 5:
-        ## NASA provides a list of coordinates of where the planet will be over the
-        ## Next month. This is not necessary for our purposes as we just need initial
-        ## conditions and then the rest will be simualted from there, so after
-        ## the velocity is found, the loop breaks.
-            break
-        count += 1
+def getEphemeris(target):
+    target = str(target)
+    startTime = datetime.datetime.now().strftime("%Y-%m-%d")
+    stopTime = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+    response = requests.get("https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='"+target+"'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&START_TIME='"+startTime+"'&STOP_TIME='"+stopTime+"'&CENTER='500@0'&STEP_SIZE='1%20d'&QUANTITIES='1,9,20,23,24,29'")
+    print(response.text)
 
-print(position)
-print(velocity)
+    position = np.array([0.0, 0.0, 0.0])
+    velocity = np.array([0.0, 0.0, 0.0])
+    count = 0
+
+    for i in range(len(response.text)):
+        # Mass is in kg, so no multiplying by a factor of 10 is needed
+        if response.text[i:i+6].lower() == 'Mass x' or response.text[i:i+5] == 'Mass, ':
+            mass = extractValue(response.text[i:i+40],True)
+        ## Thankfully radius is the same for both planets and the sun, so it can just be extracted the same way
+        if response.text[i:i+16].lower() == 'Vol. mean radius':
+            size = extractValue(response.text[i:i+40], False, 1000)
+            print("HI!")
+        
+        if response.text[i:i+3] in ['X =','Y =','Z =','VX=','VY=','VZ=']:
+            if count < 3:
+                position[count] = extractValue(response.text[i:i+40], False, 1000)
+            else:
+                velocity[count-3] = extractValue(response.text[i:i+40], False, 1000)
+            if count == 5:
+            ## NASA provides a list of coordinates of where the planet will be over the
+            ## next few days. This is not necessary for our purposes as we just need initial
+            ## conditions and then the rest will be simualted from there, so after
+            ## the velocity is found, the loop breaks.
+                break
+            count += 1
+
+    print(velocity)
+    return size, velocity, mass, position
+
+print(getEphemeris(10))
