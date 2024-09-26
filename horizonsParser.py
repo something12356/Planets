@@ -1,6 +1,9 @@
 import requests
-import numpy as np 
-response = requests.get("https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='499'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&CENTER='500@0'&START_TIME='2006-01-01'&STOP_TIME='2006-01-20'&STEP_SIZE='1%20d'&QUANTITIES='1,9,20,23,24,29'")
+import numpy as np
+import datetime
+startTime = datetime.datetime.now().strftime("%Y-%m-%d")
+stopTime = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+response = requests.get("https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='399'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&START_TIME='"+startTime+"'&STOP_TIME='"+stopTime+"'&CENTER='500@0'&STEP_SIZE='1%20d'&QUANTITIES='1,9,20,23,24,29'")
 print(response.text)
 
 ## Sometimes NASA puts a scale next to their units (e.g. they might say mass is measured as 10^23 kg)
