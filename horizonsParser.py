@@ -52,7 +52,7 @@ def getEphemeris(target):
 
     for i in range(len(response.text)):
         # Mass is in kg, so no multiplying by a factor of 10 is needed
-        if response.text[i:i+6].lower() == 'mass x' or response.text[i:i+6].lower() == 'mass, ':
+        if response.text[i:i+6].lower() == 'mass x' or response.text[i:i+7].lower() == 'mass, 1':
             mass = extractValue(response.text[i:i+50],True)
         ## Thankfully radius is the same for both planets and the sun, so it can just be extracted the same way
         if response.text[i:i+16].lower() == 'vol. mean radius':
@@ -72,5 +72,3 @@ def getEphemeris(target):
             count += 1
 
     return size, velocity, mass, position
-
-print(getEphemeris(10))

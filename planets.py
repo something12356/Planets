@@ -2,6 +2,7 @@ import math as maths
 import pygame
 import numpy as np
 import vectors as vec
+import horizonsParser
 
 ## Time-scale, how much vel and position should change per tick
 ## Lower value = slower but more accurate simulation
@@ -298,8 +299,10 @@ class satellite(celestialBody):
         if len(self.__lines) > LINE_LENGTH:
             self.__lines = self.__lines[len(self.__lines)-LINE_LENGTH:]
 
-sun = planet(695700.0 * 10**3, np.array([11.41, -8.292, -0.1685]),1988500.0 * 10 ** 24, np.array([-9.675 * 10 ** 8, -6.663 * 10 ** 8, 2.857 * 10 ** 7]),(255,255,0))
-mercury = planet(2.440 * 10**6, np.array([0.0, 4.787 * 10**4, 0.0]), 3.301 * 10**23, np.array([5.791 * 10**10, centre[x], 10000000000.0]), (65,68,74))
+planets = []
+planetColours = [(255, 255, 0), (65, 68, 74), (139, 115, 85), (0, 0, 255), (255, 99, 47), (250, 164, 87), (195, 146, 79), (98, 174, 230), (67, 109, 252)]
+# sun = planet(695700.0 * 10**3, np.array([11.41, -8.292, -0.1685]),1988500.0 * 10 ** 24, np.array([-9.675 * 10 ** 8, -6.663 * 10 ** 8, 2.857 * 10 ** 7]),(255,255,0))
+# mercury = planet(2.440 * 10**6, np.array([0.0, 4.787 * 10**4, 0.0]), 3.301 * 10**23, np.array([5.791 * 10**10, centre[x], 10000000000.0]), (65,68,74))
 # venus = planet(6.052 * 10**6, np.array([0.0, 3.502 * 10**4]),4.867 * 10**24, np.array([1.08 * 10**11, centre[x]]),(139,115,85))
 # earth = planet(6.371 * 10 **6,np.array([0.0, 2.978 * 10**4]),5.972 * 10**24, np.array([1.496 * 10**11, centre[x]]),(0,0,255))
 # moon = satellite(1.738 * 10**6, np.array([0.0, 2.978*10**4+1.022*10**3]),7.348 * 10**22, np.array([1.496 * 10**11 - 3.63*10**8, centre[x]]),(153,153,153), earth)
@@ -308,9 +311,15 @@ mercury = planet(2.440 * 10**6, np.array([0.0, 4.787 * 10**4, 0.0]), 3.301 * 10*
 # saturn = planet(5.823 * 10**7, np.array([0.0, 9.69 * 10**3]), 5.683 * 10**26, np.array([1.418 * 10**12, centre[x]]), (195, 146, 79))
 # uranus = planet(2.536 * 10**7, np.array([0.0, 6.81 * 10**3]), 8.681 * 10**25, np.array([2.9 * 10**12, centre[x]]), (98, 174, 230))
 # neptune = planet(2.462 * 10**7, np.array([0.0, 5.43 * 10**3]), 1.024 * 10 ** 26, np.array([4.503 * 10**12, centre[x]]), (67, 109, 252))
-planets = [sun, mercury]
-camera = Camera()
+sunEphemeris = horizonsParser.getEphemeris(10)
+planets.append(planet(sunEphemeris[0], sunEphemeris[1], sunEphemeris[2], sunEphemeris[3], planetColours[0]))
+for i in range(1, 9):
+    ephemeris = horizonsParser.getEphemeris(i*100+99)
+    planets.append(planet(ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[i]))
 
+camera = Camera()
+print("hi")
+print(planets)
 LINE_LENGTH = int(MAX_LINES / len(planets))
 pygame.init()
 screen = pygame.display.set_mode((1920,1080))
@@ -376,5 +385,4 @@ while running:
     displayPlanets(planets, focusAdjustment(planets, comFocus, freeCam, camera))
 
     pygame.display.flip()
-    print(mercury.getPos())
     clock.tick(120)
