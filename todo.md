@@ -3,11 +3,11 @@
 - [x] Arrows: Resultant be fixed amount of size, e.g. 1.5*size + 10 or something. Scale everything else according to that. Might not be a good idea though? Maybe just leave as is, it works well!
 - [ ] Polymorphism with celestial body class, asteroid, planet and sun inherit. Asteroids should receive less simulation time because they *will* lag it otherwise lmao. Also asteroids do NOT get orbital lines!!
 - [ ] Try including composition / aggregation somewhere? Idk how it'd work, maybe when launching rockets or something they could be created by the planet they're launched from.
-- [ ] PRIVATE VARIABLES!
+- [x] PRIVATE VARIABLES!
 - [x] x=0,y=1 indexing? To make coordinates make more sense. Or X Y.
 - [x] Button to switch focus. I.e. comDisplacement becomes focusDisplacement.
 - [ ] **SEE OBJECTIVES**
-- [ ] Optimisation, e.g. not drawing things that are off-screen.
+- [x] Optimisation, e.g. not drawing things that are off-screen.
 - [ ] Add support for varying screen sizes (pygame should have an autodetect thing?).
 - [ ] CHECK KE, MOMENTUM IS CONSERVED
 - [ ] Orbital lines fixed length rather than rely on timestep?
@@ -15,7 +15,7 @@
 	- [ ] CONFIG FILE!
 	- [ ] More constants for configurable things
 	- [ ] Sliders for changing planets mass (Yicong's idea: INCREASE RADIUS AT SAME TIME TO INDICATE IT)
-- [ ] UI FOR CHANGING THINGS LIKE G, SPEED, ETC
+- [ ] UI / CLI FOR CHANGING THINGS LIKE G, SPEED, ETC
 - [x] Change more stuff into functions, should be very modular and easy to change.
 	- [x] E.g. make DrawLines() a function, shift everything to the focus a function, make simulating law of gravity on planets a function, just wrap it up, main loop should really be quite small running the few main functions and nothing else.
 - [x] Change everything to be in SI
@@ -26,7 +26,7 @@
 		- Display on log scale? Could make the system actually look good while still being accurate.
 		- Or be able to zoom out without the planet size changing quite as much?
 		- **See reddit thing sent in Connor DMs**
-- [ ] Comment code more
+- [x] Comment code more
 - [ ] Change everything to be with sprites (same for collisions program, can then use sprite collision detection!)
 - [ ] *COLLISIONS*
 	- There is a separate collisions program in Planets, check it out! Needs some fixes but should be a good template for implementing it into the main program (and make sure to replace size with mass in the momentum equation when porting it over to planets)
@@ -35,25 +35,23 @@
 - [ ] Drag to move screen
 - [ ] Scoreboard for speed, distance from c.o.m., etc? Could use natural mergesort or similarly complex sorting algorithm.
 - [ ] Optimise lines to not use a list, just draw line and then let fade over time. See if that's possible with pygame, maybe ask around for help online + friends + canoe
-- [ ] A querying thing to query e.g. a nasa site to auto-add any planets you could want for your realistic solar system preset?
+- [x] A querying thing to query e.g. a nasa site to auto-add any planets you could want for your realistic solar system preset?
 - [x] Zoom in / out?
 - [x] Orbit line not drawn inside of planet
 	- [x] Simplest way might just be layers rather than checking if the line is in the planet? Just draw the planets on top of the lines.
 - [x] Lines showing *actual* orbit, ignoring c.o.m. shifting
-- [ ] Lines showing forces, optional, can toggle
+- [x] Lines showing forces, optional, can toggle
 - [ ] Hash table for the planets and accessing them!
 - [ ] Utility program to calculate optimal orbit dist / speed and things
 - [ ] Satellites
 	- Could inherit velocity and position from planet? Some form of inheritance would be very good for marks.
 	- Move and second law should add planet velocity / force but also orbital velocity around host planet
 	- Only take into account interaction only with that planet maybe? Depends on how computationally intensive it all is.
-- [ ] SPLIT PROGRAM INTO MULTIPLE FILES, VERY IMPORTANT
-- [ ] Test making 3d. **TEST.** Do in separate branch, see what graphics libraries needed, see how hard it would be to implement.
-	- [ ] If too difficult then could stick to same 2d graphics but make 3d and *project* it?
+- [x] SPLIT PROGRAM INTO MULTIPLE FILES, VERY IMPORTANT
+- [x] Test making 3d. **TEST.** Do in separate branch, see what graphics libraries needed, see how hard it would be to implement.
+	- [x] If too difficult then could stick to same 2d graphics but make 3d and *project* it?
 	- [ ]  ^^ if doing this then make objects smaller the further they are from plane? To simulate distance? And also hide them if they're behind another object.
 	- Check pinned message in Ozz's DMs on perspective scaling
-- [ ] NASA JPL Horizon Systems querying, add objects? Could have presets for solar system, or earth at centre with the NEOs, Saturn and its rings + moons, etc. Would need to optimise line drawing for lots of objects though.
+- [x] NASA JPL Horizon Systems querying, add objects? Could have presets for solar system, or earth at centre with the NEOs, Saturn and its rings + moons, etc. Would need to optimise line drawing for lots of objects though.
 	- [ ] Add info to them? Lean into the educational aspect and display info when clicking on objects and stuff.
-	- [ ] Check with Dr Turnbull about this!
-	- [ ] Could integrate a *lot* of cool database-y stuff for this!
-	- [ ] Maybe split this into its own program and then import in main cde? Ask Mr Bersey about if projects should have multiple program files.
+	- [x] Maybe split this into its own program and then import in main cde? Ask Mr Bersey about if projects should have multiple program files.
