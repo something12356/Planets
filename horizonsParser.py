@@ -21,7 +21,8 @@ def extractValue(text, expectingScale=False, conversionFactor=1):
 
     ## Once a digit is found it loops until a non-digit character is found. This string is taken to be the value.
     for i in range(scaleAt+3,40):
-        if text[i].isdigit():
+        ## The text[i] == '-' is so negatives are included
+        if text[i].isdigit() or text[i] == '-':
             for j in range(1,50):
                 if i+j >= 50:
                     break
@@ -44,7 +45,6 @@ def getEphemeris(target):
     startTime = datetime.datetime.now().strftime("%Y-%m-%d")
     stopTime = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     response = requests.get("https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='"+target+"'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&START_TIME='"+startTime+"'&STOP_TIME='"+stopTime+"'&CENTER='500@0'&STEP_SIZE='1%20d'&QUANTITIES='1,9,20,23,24,29'")
-    print(response.text)
 
     position = np.array([0.0, 0.0, 0.0])
     velocity = np.array([0.0, 0.0, 0.0])
@@ -71,4 +71,10 @@ def getEphemeris(target):
                 break
             count += 1
 
-    return size, velocity, mass, position
+    return [size, velocity, mass, position]
+
+def main():
+    getEphemeris(899)
+
+if __name__ == "__main__":
+    main()
