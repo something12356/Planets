@@ -76,7 +76,7 @@ class ball:
         # print(m1*mag(self.vel)**2+m2*mag(ball2.vel)**2)
 
 balls = [ball(np.array([random.uniform(0.0,1920.0),random.uniform(0.0,1080.0)]),np.array([(-1)**i*random.uniform(0.0,40.0),(-1)**i*random.uniform(0.0,40.0)]),random.uniform(9,10),(i%255,0,255-i%255)) for i in range(256)]
-# balls.append(ball(np.array([20.0,520.0]),np.array([0.0,0.0]),20,"blue"))
+# balls.append(ball(np.array([520.0,520.0]),np.array([0.0,0.0]),100,"blue"))
 cells = []
 
 pygame.init()
@@ -119,7 +119,7 @@ while True:
         for ball1 in cells[i]:
             pygame.draw.circle(screen,ball1.colour,ball1.pos,ball1.size)
             ball1.move()        
-            ball1.reflect(1.1)
+            ball1.reflect(1)
             for j in [-97,-96,-95,-1,0,1,95,96,97]:
                 if i+j > 5183 or i+j < 0:
                     continue
@@ -132,7 +132,7 @@ while True:
                         ball2.pos += 0.5*overlap*unit(ball2.pos-ball1.pos)
                         if ball1.isColliding or ball2.isColliding:
                             continue
-                        ball1.collide(ball2, 0.1)
+                        ball1.collide(ball2, 1)
                         ball1.isColliding = True
                         ball2.isColliding = True
 

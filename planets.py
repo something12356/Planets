@@ -6,8 +6,8 @@ import horizonsParser
 
 ## Time-scale, how much vel and position should change per tick
 ## Lower value = slower but more accurate simulation
-YEAR = 315576
-timeScale = 1
+YEAR = 3153600
+timeScale = 0.1*YEAR
 ## The distance constant is used to translate SI units (metres) into pixels.
 ## 2 * 10**-12 means that the earth is about 30 pixels from the sun, for reference.
 distScale = 4 * 10**-9
@@ -134,6 +134,9 @@ def focusAdjustment(planets, comFocus, freeCam, camera):
 
 def simulateTick(arrowsToDraw, planets, focus, comFocus):
     for p1 in planets:
+        ## Reset energy of planet so it can be recalculated
+        p1.addGPE(-p1.getGPE())
+        p1.addKE(-p1.getKE())
         ## Takes position before and after so that the lines for the orbits can be drawn
         for p2 in planets[planets.index(p1)+1:]:
             p1p2gravity = p1.gravity(p2)
@@ -168,6 +171,14 @@ def offscreen(vector):
         return False
     return True
 
+def calculateEnergies(planets):
+    gpe = 0
+    ke = 0
+    for p in planets:
+        gpe += p.getGPE()
+        ke += p.getKE()
+    return [gpe, ke]
+
 ## NASA's data on the solar system is all given in 3 dimensional coordinates
 ## So a simulation of 3d space is used for this program. It also leads to a more accurate model.
 ## However, displaying 3d graphics is computationally intensive. Therefore, a 2d projection is used for display instead.
@@ -197,6 +208,9 @@ class celestialBody:
         self.__colour = colour
         self.__accel = 0
         self.__resultant = 0
+        ## KE and GPE are standard acronyms for kinetic energy and gravitational potential energy
+        self.__ke = 0
+        self.__gpe = 0
         self.__lines = []
     
     ## All the getters and setters
@@ -232,6 +246,12 @@ class celestialBody:
     def getSize(self):
         return self.__size
 
+    def getGPE(self):
+        return self.__gpe
+
+    def getKE(self):
+        return self.__ke
+
     def getLines(self):
         return self.__lines
 
@@ -245,6 +265,12 @@ class celestialBody:
     def addForce(self, force):
         self.__resultant += force
 
+    def addGPE(self, energy):
+        self.__gpe += energy
+
+    def addKE(self, energy):
+        self.__ke += energy
+
     ## Sets velocity
     ## Uses F = ma to find acceleration, add to vel
     def secondLaw(self, force):
@@ -255,6 +281,7 @@ class celestialBody:
     def verletPosition(self):
         self.__vel += self.getAccel()*timeScale
         self.__pos += self.getVel()*timeScale
+        self.addKE(0.5*self.getMass()*vec.mag(self.getVel())**2)
 
     ## End of getters and setters
 
@@ -263,6 +290,7 @@ class celestialBody:
     def gravity(self, planet2):
         r = planet2.getPos() - self.getPos()
         F = G*(self.getMass()*planet2.getMass())/(vec.mag(r)**2)
+        self.addGPE(-1*F*vec.mag(r))
         return np.array([F*i/vec.mag(r) for i in r])
 
 class planet(celestialBody):
@@ -299,7 +327,7 @@ class satellite(celestialBody):
             self.__lines = self.__lines[len(self.__lines)-LINE_LENGTH:]
 
 planets = []
-planetColours = [(255, 255, 0), (65, 68, 74), (139, 115, 85), (0, 0, 255), (255, 99, 47), (250, 164, 87), (195, 146, 79), (98, 174, 230), (67, 109, 252), (255, 0, 255)]
+planetColours = [(255, 255, 0), (65, 68, 74), (139, 115, 85), (0, 0, 255), (255, 99, 47), (250, 164, 87), (195, 146, 79), (98, 174, 230), (67, 109, 252)]
 # sun = planet(695700.0 * 10**3, np.array([11.41, -8.292, -0.1685]),1988500.0 * 10 ** 24, np.array([-9.675 * 10 ** 8, -6.663 * 10 ** 8, 2.857 * 10 ** 7]),(255,255,0))
 # mercury = planet(2.440 * 10**6, np.array([0.0, 4.787 * 10**4, 0.0]), 3.301 * 10**23, np.array([5.791 * 10**10, centre[x], 10000000000.0]), (65,68,74))
 # venus = planet(6.052 * 10**6, np.array([0.0, 3.502 * 10**4]),4.867 * 10**24, np.array([1.08 * 10**11, centre[x]]),(139,115,85))
@@ -312,7 +340,7 @@ planetColours = [(255, 255, 0), (65, 68, 74), (139, 115, 85), (0, 0, 255), (255,
 # neptune = planet(2.462 * 10**7, np.array([0.0, 5.43 * 10**3]), 1.024 * 10 ** 26, np.array([4.503 * 10**12, centre[x]]), (67, 109, 252))
 sunEphemeris = horizonsParser.getEphemeris(10)
 planets.append(planet(sunEphemeris[0], sunEphemeris[1], sunEphemeris[2], sunEphemeris[3], planetColours[0]))
-for i in range(1, 10):
+for i in range(1, 9):
     ephemeris = horizonsParser.getEphemeris(i*100+99)
     ## For some reason, Jupiter's mass is given in grams by NASA
     ## Despite all other masses being given in kilograms
@@ -327,7 +355,6 @@ for i in range(len(planets)):
     print("PLANET", i)
     print("RADIUS:", p.getSize(), "VELOCITY:", p.getVel(), "MASS:", p.getMass(), "POSITION:", p.getPos())
     print('---')
-input("")
 
 camera = Camera()
 print(planets)
@@ -394,6 +421,11 @@ while running:
         displayArrows(arrowsToDraw, focusAdjustment(planets, comFocus, freeCam, camera))
     arrowsToDraw = []
     displayPlanets(planets, focusAdjustment(planets, comFocus, freeCam, camera))
+    energies = calculateEnergies(planets)
+    print("GPE:", f'{energies[0]:.2e}')
+    print("KE:", f'{energies[1]:.2e}')
+    print("TOTAL:", f'{energies[0]+energies[1]:.2e}')
+    print('---')
 
     pygame.display.flip()
     clock.tick(120)
