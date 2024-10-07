@@ -1,5 +1,7 @@
 import math as maths
 import numpy as np
+x = 0
+y = 1
 
 ## Finds the dot product of two vectors
 def dot(vec1, vec2):

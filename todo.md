@@ -9,7 +9,7 @@
 - [ ] **SEE OBJECTIVES**
 - [x] Optimisation, e.g. not drawing things that are off-screen.
 - [ ] Add support for varying screen sizes (pygame should have an autodetect thing?).
-- [ ] CHECK KE, MOMENTUM IS CONSERVED
+- [x] CHECK KE, MOMENTUM IS CONSERVED
 - [ ] Orbital lines fixed length rather than rely on timestep?
 - [ ] Planet choices but also *presets*
 	- [ ] CONFIG FILE!
@@ -32,7 +32,7 @@
 	- There is a separate collisions program in Planets, check it out! Needs some fixes but should be a good template for implementing it into the main program (and make sure to replace size with mass in the momentum equation when porting it over to planets)
 	- [ ] Add angle of incidence (e.g. if circle hits other circle at 45 degree angle with only horizontal vel, the circle being hit should get upwards vel and horizontal vel)
 	- [ ] Do KE checks after this to make sure it's still preserved
-- [ ] Drag to move screen
+- [ ] Get freecam working
 - [ ] Scoreboard for speed, distance from c.o.m., etc? Could use natural mergesort or similarly complex sorting algorithm.
 - [ ] Optimise lines to not use a list, just draw line and then let fade over time. See if that's possible with pygame, maybe ask around for help online + friends + canoe
 - [x] A querying thing to query e.g. a nasa site to auto-add any planets you could want for your realistic solar system preset?
@@ -41,7 +41,6 @@
 	- [x] Simplest way might just be layers rather than checking if the line is in the planet? Just draw the planets on top of the lines.
 - [x] Lines showing *actual* orbit, ignoring c.o.m. shifting
 - [x] Lines showing forces, optional, can toggle
-- [ ] Hash table for the planets and accessing them!
 - [ ] Utility program to calculate optimal orbit dist / speed and things
 - [ ] Satellites
 	- Could inherit velocity and position from planet? Some form of inheritance would be very good for marks.
@@ -52,6 +51,7 @@
 	- [x] If too difficult then could stick to same 2d graphics but make 3d and *project* it?
 	- [ ]  ^^ if doing this then make objects smaller the further they are from plane? To simulate distance? And also hide them if they're behind another object.
 	- Check pinned message in Ozz's DMs on perspective scaling
+- [ ] Size comparison
 - [x] NASA JPL Horizon Systems querying, add objects? Could have presets for solar system, or earth at centre with the NEOs, Saturn and its rings + moons, etc. Would need to optimise line drawing for lots of objects though.
 	- [ ] Add info to them? Lean into the educational aspect and display info when clicking on objects and stuff.
 	- [x] Maybe split this into its own program and then import in main cde? Ask Mr Bersey about if projects should have multiple program files.

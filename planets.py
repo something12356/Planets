@@ -4,10 +4,11 @@ import numpy as np
 import vectors as vec
 import horizonsParser
 
+framerate = 60
 ## Time-scale, how much vel and position should change per tick
 ## Lower value = slower but more accurate simulation
-YEAR = 3153600
-timeScale = 0.1*YEAR
+YEAR = 31536000/framerate
+timeScale = 0.5*YEAR
 ## The distance constant is used to translate SI units (metres) into pixels.
 ## 2 * 10**-12 means that the earth is about 30 pixels from the sun, for reference.
 distScale = 4 * 10**-9
@@ -60,15 +61,17 @@ def scaledPos(vector):
 
 ## Draws an arrow by drawing a line, picking two points either side of that line, and drawing lines from the end of the first line to those two points
 def drawArrow(colour, startPos, endPos):
-    vector = endPos - startPos
+    vector = (endPos - startPos)[:2]
     length = vec.mag(vector)
-    pygame.draw.aaline(screen, colour, startPos, endPos)
+    ## My solar system is in 3d space, but pygame can only handle 2d lines.
+    ## The [:2] is necessary to deal with that.
+    pygame.draw.aaline(screen, colour, startPos[:2], endPos[:2])
     ## Generating the two points either side of the line
     norm = vec.normal(vector)
-    p1 = startPos + 0.8*vec + 0.15*length*norm
-    p2 = startPos + 0.8*vec - 0.15*length*norm
-    pygame.draw.aaline(screen, colour, p1, endPos)
-    pygame.draw.aaline(screen, colour, p2, endPos)
+    p1 = startPos[:2] + 0.8*vector[:2] + 0.15*length*norm[:2]
+    p2 = startPos[:2] + 0.8*vector[:2] - 0.15*length*norm[:2]
+    pygame.draw.aaline(screen, colour, p1, endPos[:2])
+    pygame.draw.aaline(screen, colour, p2, endPos[:2])
 
 def displayArrows(arrowsToDraw, adjustment):
     if len(arrowsToDraw) > 0:
@@ -96,6 +99,10 @@ def displayLines(planets, adjustment):
             indexRatio = index/len(p.getLines())
             pygame.draw.aaline(screen,([int(indexRatio*line[2][i]) for i in range(3)]),scaledPos(line[0])[:2]+adjustment[:2],scaledPos(line[1])[:2]+adjustment[:2],int(indexRatio*255))
         
+def drawPlanet(p, position):
+    if p.getSize()*distScale > 10**-2:
+        pygame.draw.circle(screen,p.getColour(),position,p.getSize()*distScale)
+
 def displayPlanets(planets, adjustment):
     for p in planets:
         # if offscreen(p.getLogPos()):
@@ -103,8 +110,7 @@ def displayPlanets(planets, adjustment):
         # if p.getColour() == (0,0,255):
         #     print(p.getLogPos())
         ## Don't draw planet if small
-        if p.getSize()*distScale > 10**-2:
-            pygame.draw.circle(screen,p.getColour(),p.getScaledPos()[:2]+adjustment[:2],p.getSize()*distScale)
+        drawPlanet(p, p.getScaledPos()[:2]+adjustment[:2])
 
 ## Finds the centre of mass of the sysetm
 def com(planets):
@@ -368,6 +374,8 @@ focus = 0
 comFocus = False
 freeCam = False
 arrows = False
+comparison = False
+planetsToCompare = [0, 5]
 
 while running:
     screen.fill((0,0,0))
@@ -400,6 +408,19 @@ while running:
                 print('----------')
                 camera.setPos(centre - focusAdjustment(planets, comFocus, freeCam, camera))
                 freeCam = True
+            if event.key == pygame.K_y:
+                if len(planets) == 9:
+                    sun = planets[0]
+                    planets = planets[1:]
+                else:
+                    planets.insert(0, sun)
+            if event.key == pygame.K_c:
+                comparison = not comparison
+            if event.key == pygame.K_x:
+                planetsToCompare[0] = (planetsToCompare[0]+1) % len(planets)
+            if event.key == pygame.K_v:
+                planetsToCompare[1] = (planetsToCompare[1]+1) % len(planets)
+            
         if event.type == pygame.MOUSEWHEEL:
             if event.y == 1:
                 if zoomScale < distScale:
@@ -416,11 +437,15 @@ while running:
     ## focusAdjustment makes it so that the screen follows whichever planet the user wants to look at
     ## Alternatively, follows the centre of mass, useful for binary star systems
     # focusAdjustment(planets, comFocus)
-    displayLines(planets, focusAdjustment(planets, comFocus, freeCam, camera))
     if arrows:
         displayArrows(arrowsToDraw, focusAdjustment(planets, comFocus, freeCam, camera))
     arrowsToDraw = []
-    displayPlanets(planets, focusAdjustment(planets, comFocus, freeCam, camera))
+    if comparison:
+        drawPlanet(planets[planetsToCompare[0]], np.array([480, 540]))
+        drawPlanet(planets[planetsToCompare[1]], np.array([1440, 540]))
+    else:
+        displayPlanets(planets, focusAdjustment(planets, comFocus, freeCam, camera))
+        displayLines(planets, focusAdjustment(planets, comFocus, freeCam, camera))
     energies = calculateEnergies(planets)
     print("GPE:", f'{energies[0]:.2e}')
     print("KE:", f'{energies[1]:.2e}')
@@ -428,4 +453,4 @@ while running:
     print('---')
 
     pygame.display.flip()
-    clock.tick(120)
+    clock.tick(framerate)
