@@ -4,7 +4,7 @@ import numpy as np
 import vectors as vec
 import horizonsParser
 
-framerate = 60
+framerate = 120
 ## Time-scale, how much vel and position should change per tick
 ## Lower value = slower but more accurate simulation
 YEAR = 31536000/framerate
@@ -99,18 +99,18 @@ def displayLines(planets, adjustment):
             indexRatio = index/len(p.getLines())
             pygame.draw.aaline(screen,([int(indexRatio*line[2][i]) for i in range(3)]),scaledPos(line[0])[:2]+adjustment[:2],scaledPos(line[1])[:2]+adjustment[:2],int(indexRatio*255))
         
-def drawPlanet(p, position):
-    if p.getSize()*distScale > 10**-2:
-        pygame.draw.circle(screen,p.getColour(),position,p.getSize()*distScale)
-
-def displayPlanets(planets, adjustment):
+def drawPlanet(p, position, surface):
+    # if p.getSize()*distScale > 10**-2:
+    pygame.draw.circle(surface,p.getColour(),position,p.getSize()*distScale)
+    
+def displayPlanets(planets, adjustment, surface):
     for p in planets:
         # if offscreen(p.getLogPos()):
         #     continue
         # if p.getColour() == (0,0,255):
         #     print(p.getLogPos())
         ## Don't draw planet if small
-        drawPlanet(p, p.getScaledPos()[:2]+adjustment[:2])
+        drawPlanet(p, p.getScaledPos()[:2]+adjustment[:2], surface)
 
 ## Finds the centre of mass of the sysetm
 def com(planets):
@@ -376,6 +376,8 @@ freeCam = False
 arrows = False
 comparison = False
 planetsToCompare = [0, 5]
+comparisonSurface1 = pygame.Surface((957, 1080))
+comparisonSurface2 = pygame.Surface((957, 1080))
 
 while running:
     screen.fill((0,0,0))
@@ -408,6 +410,9 @@ while running:
                 print('----------')
                 camera.setPos(centre - focusAdjustment(planets, comFocus, freeCam, camera))
                 freeCam = True
+            if event.key == pygame.K_i:
+                G += 0.01*G
+                print(G)
             if event.key == pygame.K_y:
                 if len(planets) == 9:
                     sun = planets[0]
@@ -441,10 +446,14 @@ while running:
         displayArrows(arrowsToDraw, focusAdjustment(planets, comFocus, freeCam, camera))
     arrowsToDraw = []
     if comparison:
-        drawPlanet(planets[planetsToCompare[0]], np.array([480, 540]))
-        drawPlanet(planets[planetsToCompare[1]], np.array([1440, 540]))
+        drawPlanet(planets[planetsToCompare[0]], np.array([480, 540]), comparisonSurface1)
+        drawPlanet(planets[planetsToCompare[1]], np.array([480, 540]), comparisonSurface2)
+        screen.blit(comparisonSurface1, (0, 0))
+        screen.blit(comparisonSurface2, (963, 0))
+        for i in range(-3,4):
+            pygame.draw.aaline(screen, "blue", [960+i,0], [960+i,1080])
     else:
-        displayPlanets(planets, focusAdjustment(planets, comFocus, freeCam, camera))
+        displayPlanets(planets, focusAdjustment(planets, comFocus, freeCam, camera), screen)
         displayLines(planets, focusAdjustment(planets, comFocus, freeCam, camera))
     energies = calculateEnergies(planets)
     print("GPE:", f'{energies[0]:.2e}')
