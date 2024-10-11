@@ -446,6 +446,8 @@ while running:
         displayArrows(arrowsToDraw, focusAdjustment(planets, comFocus, freeCam, camera))
     arrowsToDraw = []
     if comparison:
+        pygame.draw.rect(comparisonSurface1, 'black', (0, 0, 1920, 1080))
+        pygame.draw.rect(comparisonSurface2, 'black', (0, 0, 1920, 1080))
         drawPlanet(planets[planetsToCompare[0]], np.array([480, 540]), comparisonSurface1)
         drawPlanet(planets[planetsToCompare[1]], np.array([480, 540]), comparisonSurface2)
         screen.blit(comparisonSurface1, (0, 0))
