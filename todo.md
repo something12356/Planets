@@ -51,7 +51,7 @@
 	- [x] If too difficult then could stick to same 2d graphics but make 3d and *project* it?
 	- [ ]  ^^ if doing this then make objects smaller the further they are from plane? To simulate distance? And also hide them if they're behind another object.
 	- Check pinned message in Ozz's DMs on perspective scaling
-- [ ] Size comparison
+- [x] Size comparison
 - [x] NASA JPL Horizon Systems querying, add objects? Could have presets for solar system, or earth at centre with the NEOs, Saturn and its rings + moons, etc. Would need to optimise line drawing for lots of objects though.
 	- [ ] Add info to them? Lean into the educational aspect and display info when clicking on objects and stuff.
 	- [x] Maybe split this into its own program and then import in main cde? Ask Mr Bersey about if projects should have multiple program files.
