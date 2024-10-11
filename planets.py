@@ -446,6 +446,7 @@ while running:
         displayArrows(arrowsToDraw, focusAdjustment(planets, comFocus, freeCam, camera))
     arrowsToDraw = []
     if comparison:
+        ## These rects get rid of old drawings, similar to doing screen.fill((0,0,0)) to refresh the display
         pygame.draw.rect(comparisonSurface1, 'black', (0, 0, 1920, 1080))
         pygame.draw.rect(comparisonSurface2, 'black', (0, 0, 1920, 1080))
         drawPlanet(planets[planetsToCompare[0]], np.array([480, 540]), comparisonSurface1)
