@@ -16,6 +16,7 @@
 	- [ ] More constants for configurable things
 	- [ ] Sliders for changing planets mass (Yicong's idea: INCREASE RADIUS AT SAME TIME TO INDICATE IT)
 - [ ] UI / CLI FOR CHANGING THINGS LIKE G, SPEED, ETC
+	- [ ] This can also be used for displaying stats about the planet and giving a link for info
 - [x] Change more stuff into functions, should be very modular and easy to change.
 	- [x] E.g. make DrawLines() a function, shift everything to the focus a function, make simulating law of gravity on planets a function, just wrap it up, main loop should really be quite small running the few main functions and nothing else.
 - [x] Change everything to be in SI
