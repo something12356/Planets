@@ -163,7 +163,7 @@ def simulateTick(arrowsToDraw, planets, focus, comFocus):
         p1.secondLaw(p1.getResultant())
         beforePos = np.copy(p1.getPos())
         ## Uses verlet integration to update velocity and acceleration of planet
-        p1.verletPosition()
+        p1.verlet()
         afterPos = np.copy(p1.getPos())
         p1.addLine([beforePos,afterPos,p1.getColour()])  
         ## Reset the resultant to 0 so it can be calculated again next tick
@@ -284,7 +284,7 @@ class celestialBody:
    
     ## Sets position
     ## Updates velocity and then moves a planet by its velocity
-    def verletPosition(self):
+    def verlet(self):
         self.__vel += self.getAccel()*timeScale
         self.__pos += self.getVel()*timeScale
         self.addKE(0.5*self.getMass()*vec.mag(self.getVel())**2)

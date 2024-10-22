@@ -1,0 +1,22 @@
+{
+	"nodes":[
+		{"id":"73cae14f9c0c65c2","type":"text","text":"Gravitational force on p1 from p2 is calculated using $F=\\frac{GM_{1}M_{2}}{r^{2}}$ and added to resultant force on p1","x":-260,"y":580,"width":322,"height":227},
+		{"id":"3b8f5de9a28294af","type":"text","text":"Reached end of list of bodies?","x":160,"y":625,"width":322,"height":137},
+		{"id":"8b5932b213542d91","type":"text","text":"p1 is selected to find the acceleration on it.","x":-260,"y":-280,"width":322,"height":137},
+		{"id":"519ac2117a3b5fa0","type":"text","text":"The first body in the list of celestial bodies (p2) is selected","x":-260,"y":180,"width":322,"height":137},
+		{"id":"48d0dd5ff0a4bac6","type":"text","text":"Resultant force on p1 is set to 0.","x":-260,"y":-40,"width":322,"height":137},
+		{"id":"75ec85b99805d65b","type":"text","text":"p2 is set to be the next body in the list.","x":160,"y":317,"width":322,"height":137},
+		{"id":"0c0a798c4b30585b","type":"text","text":"Acceleration on p1 is calculated with the resultant force using $a=\\frac{F}{m}$","x":160,"y":920,"width":322,"height":180},
+		{"id":"9c9dde23ae54e79d","type":"text","text":"Acceleration is given to the Verlet intergrator to do calculations with.","x":160,"y":1240,"width":322,"height":137}
+	],
+	"edges":[
+		{"id":"f351a420a98d948b","fromNode":"519ac2117a3b5fa0","fromSide":"bottom","toNode":"73cae14f9c0c65c2","toSide":"top"},
+		{"id":"da5eef5be2723361","fromNode":"8b5932b213542d91","fromSide":"bottom","toNode":"48d0dd5ff0a4bac6","toSide":"top"},
+		{"id":"604b624dad513c7d","fromNode":"48d0dd5ff0a4bac6","fromSide":"bottom","toNode":"519ac2117a3b5fa0","toSide":"top"},
+		{"id":"064e8bee5e3f0129","fromNode":"73cae14f9c0c65c2","fromSide":"right","toNode":"3b8f5de9a28294af","toSide":"left"},
+		{"id":"9d9b1dfd53def37c","fromNode":"75ec85b99805d65b","fromSide":"left","toNode":"73cae14f9c0c65c2","toSide":"top"},
+		{"id":"bbcc3399e6bc41b9","fromNode":"3b8f5de9a28294af","fromSide":"top","toNode":"75ec85b99805d65b","toSide":"bottom","label":"No"},
+		{"id":"266b90e3d6d4064f","fromNode":"3b8f5de9a28294af","fromSide":"bottom","toNode":"0c0a798c4b30585b","toSide":"top","label":"Yes"},
+		{"id":"84f93e5bc47f0da9","fromNode":"0c0a798c4b30585b","fromSide":"bottom","toNode":"9c9dde23ae54e79d","toSide":"top"}
+	]
+}
