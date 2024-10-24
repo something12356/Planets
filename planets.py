@@ -147,20 +147,20 @@ def simulateTick(arrowsToDraw, planets, focus, comFocus):
         for p2 in planets[planets.index(p1)+1:]:
             p1p2gravity = p1.gravity(p2)
             p1.addForce(p1p2gravity)
-
+            ## Can take away here due to Newton's third law, each force has equal and opposite reaction force
+            p2.addForce(-p1p2gravity)
             ## Draws force arrows showing the forces acting on the planet
             if planets.index(p1) == focus and not comFocus:
                 arrowsToDraw.append(["white", p1, np.copy(p1p2gravity)])
             if planets.index(p2) == focus and not comFocus:
                 arrowsToDraw.append(["white", p2, -1*np.copy(p1p2gravity)])
-            ## Can take away here due to Newton's third law, each force has equal and opposite reaction force
-            p2.addForce(-p1p2gravity)
+
 
         if planets.index(p1) == focus and not comFocus:
             arrowsToDraw.append([p1.getColour(), p1, np.copy(p1.getResultant())])
             arrowsToDraw.append(np.copy(p1.getResultant()))
 
-        p1.secondLaw(p1.getResultant())
+        p1.secondLaw()
         beforePos = np.copy(p1.getPos())
         ## Uses verlet integration to update velocity and acceleration of planet
         p1.verlet()
@@ -279,8 +279,8 @@ class celestialBody:
 
     ## Sets velocity
     ## Uses F = ma to find acceleration, add to vel
-    def secondLaw(self, force):
-        self.__accel = force/self.getMass()
+    def secondLaw(self):
+        self.__accel = self.getResultant()/self.getMass()
    
     ## Sets position
     ## Updates velocity and then moves a planet by its velocity
