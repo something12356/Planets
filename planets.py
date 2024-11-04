@@ -81,11 +81,11 @@ def displayArrows(arrowsToDraw, adjustment):
         p = arrow[1]
         if arrow[0] != "white":
             # print("RESULTANT:", abs(maths.log(vec.mag(forceToDraw)+1,1000))*240*vec.mag(arrow[2]), abs(arrow[3]))
-            drawArrow(arrow[0], p.getScaledPos()+adjustment, p.getScaledPos()+(10**-12)*distScale*arrow[2]/(maths.log(p.getMass()))+p.getSize()*distScale*vec.unit(arrow[2])+adjustment)
+            drawArrow(arrow[0], p.getScaledPos()+adjustment, p.getScaledPos()+(10**-12)*(distScale)*2*arrow[2]/(maths.log(p.getMass())) + adjustment)
             print(arrow[2]*distScale*10**-12/(maths.log(p.getMass())))
         else:
             # print("COMPONENT:", abs(maths.log(vec.mag(forceToDraw)+1,1000))*240*vec.mag(arrow[2]), abs(arrow[3]))
-            drawArrow(arrow[0], p.getScaledPos()+adjustment, p.getScaledPos()+(10**-12)*distScale*arrow[2]/(maths.log(p.getMass()))+(p.getSize()*distScale)*vec.unit(arrow[2])+adjustment)
+            drawArrow(arrow[0], p.getScaledPos()+adjustment, p.getScaledPos()+(10**-12)*(distScale)*2*arrow[2]/(maths.log(p.getMass()))+adjustment)
 
 def displayLines(planets, adjustment):
     for p in planets:
@@ -158,7 +158,7 @@ def simulateTick(arrowsToDraw, planets, focus, comFocus):
 
         if planets.index(p1) == focus and not comFocus:
             arrowsToDraw.append([p1.getColour(), p1, np.copy(p1.getResultant())])
-            arrowsToDraw.append(np.copy(p1.getResultant()))
+            # arrowsToDraw.append(np.copy(p1.getResultant()))
 
         p1.secondLaw()
         beforePos = np.copy(p1.getPos())
@@ -442,11 +442,8 @@ while running:
     ## focusAdjustment makes it so that the screen follows whichever planet the user wants to look at
     ## Alternatively, follows the centre of mass, useful for binary star systems
     # focusAdjustment(planets, comFocus)
-    if arrows:
-        displayArrows(arrowsToDraw, focusAdjustment(planets, comFocus, freeCam, camera))
-    arrowsToDraw = []
     if comparison:
-        ## These rects get rid of old drawings, similar to doing screen.fill((0,0,0)) to refresh the display
+        ## Thes2e rects get rid of old drawings, similar to doing screen.fill((0,0,0)) to refresh the display
         pygame.draw.rect(comparisonSurface1, 'black', (0, 0, 1920, 1080))
         pygame.draw.rect(comparisonSurface2, 'black', (0, 0, 1920, 1080))
         drawPlanet(planets[planetsToCompare[0]], np.array([480, 540]), comparisonSurface1)
@@ -458,6 +455,8 @@ while running:
     else:
         displayPlanets(planets, focusAdjustment(planets, comFocus, freeCam, camera), screen)
         displayLines(planets, focusAdjustment(planets, comFocus, freeCam, camera))
+        if arrows:
+            displayArrows(arrowsToDraw, focusAdjustment(planets, comFocus, freeCam, camera))
     energies = calculateEnergies(planets)
     print("GPE:", f'{energies[0]:.2e}')
     print("KE:", f'{energies[1]:.2e}')
