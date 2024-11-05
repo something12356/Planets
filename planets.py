@@ -103,6 +103,11 @@ def drawPlanet(p, position, surface):
     # if p.getSize()*distScale > 10**-2:
     pygame.draw.circle(surface,p.getColour(),position,p.getSize()*distScale)
     
+## NASA's data on the solar system is all given in 3 dimensional coordinates
+## So a simulation of 3d space is used for this program. It also leads to a more accurate model.
+## However, displaying 3d graphics is computationally intensive and doesn't contribute to understanding
+## of the solar system, so a top down 2d view is displayed. This is why only the first two coordinates of the planet
+## are used for drawing it.
 def displayPlanets(planets, adjustment, surface):
     for p in planets:
         # if offscreen(p.getLogPos()):
@@ -184,26 +189,6 @@ def calculateEnergies(planets):
         gpe += p.getGPE()
         ke += p.getKE()
     return [gpe, ke]
-
-## NASA's data on the solar system is all given in 3 dimensional coordinates
-## So a simulation of 3d space is used for this program. It also leads to a more accurate model.
-## However, displaying 3d graphics is computationally intensive. Therefore, a 2d projection is used for display instead.
-## The projection itself is rather simple because the chosen plane is the x,y plane. Simply take the x and y coordinates.
-## However, planets also need to be shrunk. This is done by calculating their distance to the camera.
-## The camera's z position is 960 / d
-
-class Camera:
-    def __init__(self):
-        self.__pos = np.array([0.0,0.0,0.0])
-
-    def getPos(self):
-        return self.__pos
-
-    def setPos(self, pos):
-        self.__pos = pos
-
-    def move(self, step):
-        self.__pos += step
 
 class celestialBody:
     def __init__(self, size, vel, mass, pos, colour):
