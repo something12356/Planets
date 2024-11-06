@@ -55,8 +55,8 @@ def logPos(vector, planet=None, takeIntoAccountSize=False, warp=True):
 
 ## Takes in a position vector and outputs that vector from the centre of mass scaled by the distance constant.
 ## This way if a planet is 150 million km from the sun, it can be displayed as x amount of pixels from the sun.
-def scaledPos(vector):
-    comVector = vector - com(planets)
+def scaledPos(position):
+    comVector = position - com(planets)
     return com(planets) + distScale * comVector
 
 ## Draws an arrow by drawing a line, picking two points either side of that line, and drawing lines from the end of the first line to those two points
@@ -127,11 +127,12 @@ def com(planets):
     # print(com/mass)
     return com/mass
 
-def focusAdjustment(planets, comFocus):
+def focusAdjustment(planets, focus, comFocus):
     if comFocus:
-        focusDisplacement = centre - scaledPos(com(planets))
+        currentFocus = com(planets)
     else:
-        focusDisplacement = centre - planets[focus].getScaledPos()
+        currentFocus = planets[focus].getPos()
+    focusDisplacement = centre - scaledPos(currentFocus)
     return focusDisplacement
     # for p in planets:
     #     p.move(focusDisplacement)
@@ -422,10 +423,10 @@ while running:
         for i in range(-3,4):
             pygame.draw.aaline(screen, "blue", [960+i,0], [960+i,1080])
     else:
-        displayPlanets(planets, focusAdjustment(planets, comFocus), screen)
-        displayLines(planets, focusAdjustment(planets, comFocus))
+        displayPlanets(planets, focusAdjustment(planets, focus, comFocus), screen)
+        displayLines(planets, focusAdjustment(planets, focus, comFocus))
         if arrows:
-            displayArrows(arrowsToDraw, focusAdjustment(planets, comFocus))
+            displayArrows(arrowsToDraw, focusAdjustment(planets, focus, comFocus))
     energies = calculateEnergies(planets)
     print("GPE:", f'{energies[0]:.2e}')
     print("KE:", f'{energies[1]:.2e}')
