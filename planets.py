@@ -124,6 +124,7 @@ def com(planets):
     for p in planets:
         com += p.getMass()*p.getPos()
         mass += p.getMass()
+    print(com/mass)
     return com/mass
 
 def focusAdjustment(planets, comFocus, freeCam, camera):
