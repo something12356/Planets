@@ -124,18 +124,14 @@ def com(planets):
     for p in planets:
         com += p.getMass()*p.getPos()
         mass += p.getMass()
-    print(com/mass)
+    # print(com/mass)
     return com/mass
 
-def focusAdjustment(planets, comFocus, freeCam, camera):
-    if freeCam:
-        focusDisplacement = centre - camera.getPos()
-        print(freeCam)
+def focusAdjustment(planets, comFocus):
+    if comFocus:
+        focusDisplacement = centre - scaledPos(com(planets))
     else:
-        if comFocus:
-            focusDisplacement = centre - scaledPos(com(planets))
-        else:
-            focusDisplacement = centre - planets[focus].getScaledPos()
+        focusDisplacement = centre - planets[focus].getScaledPos()
     return focusDisplacement
     # for p in planets:
     #     p.move(focusDisplacement)
@@ -348,7 +344,6 @@ for i in range(len(planets)):
     print("RADIUS:", p.getSize(), "VELOCITY:", p.getVel(), "MASS:", p.getMass(), "POSITION:", p.getPos())
     print('---')
 
-camera = Camera()
 print(planets)
 LINE_LENGTH = int(MAX_LINES / len(planets))
 pygame.init()
@@ -358,7 +353,6 @@ running = True
 arrowsToDraw = []
 focus = 0
 comFocus = False
-freeCam = False
 arrows = False
 comparison = False
 planetsToCompare = [0, 5]
@@ -374,10 +368,8 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
                 focus = (focus+1)%len(planets)
-                freeCam = False
             elif event.key == pygame.K_LEFT:
                 focus = (focus-1)%len(planets)
-                freeCam = False
             elif event.key == pygame.K_UP:
                 timeScale += 0.1*YEAR
             elif event.key == pygame.K_DOWN:
@@ -385,17 +377,8 @@ while running:
             elif event.key == pygame.K_SPACE:
                 ## Toggles whether or not the screen is centered on the centre of mass
                 comFocus = not comFocus
-                if freeCam:
-                    comFocus = True
-                freeCam = False
             elif event.key == pygame.K_f:
                 arrows = not arrows
-            if event.key == pygame.K_w or event.key == pygame.K_s or event.key == pygame.K_a or event.key == pygame.K_d:
-                print('----------')
-                print('----------')
-                print('----------')
-                camera.setPos(centre - focusAdjustment(planets, comFocus, freeCam, camera))
-                freeCam = True
             if event.key == pygame.K_i:
                 G += 0.01*G
                 print(G)
@@ -439,10 +422,10 @@ while running:
         for i in range(-3,4):
             pygame.draw.aaline(screen, "blue", [960+i,0], [960+i,1080])
     else:
-        displayPlanets(planets, focusAdjustment(planets, comFocus, freeCam, camera), screen)
-        displayLines(planets, focusAdjustment(planets, comFocus, freeCam, camera))
+        displayPlanets(planets, focusAdjustment(planets, comFocus), screen)
+        displayLines(planets, focusAdjustment(planets, comFocus))
         if arrows:
-            displayArrows(arrowsToDraw, focusAdjustment(planets, comFocus, freeCam, camera))
+            displayArrows(arrowsToDraw, focusAdjustment(planets, comFocus))
     energies = calculateEnergies(planets)
     print("GPE:", f'{energies[0]:.2e}')
     print("KE:", f'{energies[1]:.2e}')
