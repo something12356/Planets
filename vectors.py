@@ -8,8 +8,7 @@ def dot(vec1, vec2):
     if len(vec1) != len(vec2):
         print("Dimension error!")
         return
-    else:
-        return sum([vec1[i]*vec2[i] for i in range(len(vec1))])
+    return sum([vec1[i]*vec2[i] for i in range(len(vec1))])
 
 ## Finds the magnitude of a vector
 def mag(vec):
