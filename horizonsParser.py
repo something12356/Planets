@@ -39,7 +39,7 @@ def extractValue(text, expectingScale=False, conversionFactor=1):
             break
     return scale*value*conversionFactor
 
-def getEphemeris(target, useGM=False):
+def getEphemeris(target, useGM=False, ignoreMassSize=False, mass=0, size=0):
     target = str(target)
     startTime = datetime.datetime.now().strftime("%Y-%m-%d")
     stopTime = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
@@ -50,22 +50,23 @@ def getEphemeris(target, useGM=False):
     count = 0
 
     for i in range(len(response.text)):
-        if not useGM:
-            # Mass is in kg, so no multiplying by a factor of 10 is needed
-            if response.text[i:i+6].lower() == 'mass x' or response.text[i:i+6].lower() == 'mass, ':
-                mass = extractValue(response.text[i:i+50],True)
+        if not ignoreMassSize:
+            if not useGM:
+                # Mass is in kg, so no multiplying by a factor of 10 is needed
+                if response.text[i:i+6].lower() == 'mass x' or response.text[i:i+6].lower() == 'mass, ':
+                    mass = extractValue(response.text[i:i+50],True)
 
-        ## For some bodies only G*mass, rather than the mass, is given, due to quirks in how we calculate the mass of big things
-        ## in this case I have to work out the mass myself from the GM value given.
-        ## NASA is not standard AT ALL about how they label the GM value in their ephemeris so I have to have a lot of or statements here
-        ## While I do not need this feature at all because I don't include any moons apart from our own,
-        ## for users of my program that want to include for example Jupiter's moons, this feature will let them do that.
-        else:
-            if response.text[i:i+6].lower() == 'gm, km' or response.text[i:i+6].lower() == 'gm   (' or response.text[i:i+6].lower() == 'gm (km':
-                mass = extractValue(response.text[i+20:i+50], False, 1/(6.6743015*10**-20))
-        ## Thankfully radius is the same for both planets and the sun, so it can just be extracted the same way
-        if response.text[i:i+16].lower() == 'vol. mean radius' or response.text[i:i+16].lower() == 'mean radius (km)':
-            size = extractValue(response.text[i:i+50], False, 1000)
+            ## For some bodies only G*mass, rather than the mass, is given, due to quirks in how we calculate the mass of big things
+            ## in this case I have to work out the mass myself from the GM value given.
+            ## NASA is not standard AT ALL about how they label the GM value in their ephemeris so I have to have a lot of or statements here
+            ## While I do not need this feature at all because I don't include any moons apart from our own,
+            ## for users of my program that want to include for example Jupiter's moons, this feature will let them do that.
+            else:
+                if response.text[i:i+6].lower() == 'gm, km' or response.text[i:i+6].lower() == 'gm   (' or response.text[i:i+6].lower() == 'gm (km':
+                    mass = extractValue(response.text[i+20:i+50], False, 1/(6.6743015*10**-20))
+            ## Thankfully radius is the same for both planets and the sun, so it can just be extracted the same way
+            if response.text[i:i+16].lower() == 'vol. mean radius' or response.text[i:i+16].lower() == 'mean radius (km)':
+                size = extractValue(response.text[i:i+50], False, 1000)
         
         if response.text[i:i+3] in ['X =','Y =','Z =','VX=','VY=','VZ=']:
             if count < 3:

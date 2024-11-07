@@ -318,9 +318,16 @@ for i in range(1, 9):
     if i == 5:
         ephemeris[2] = ephemeris[2]/1000
     planets.append(planet(ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[i]))
+## Adding a few prominent satellites (voyager 1&2)
+ephemeris=horizonsParser.getEphemeris(-31, False, True, 722, 13) # Voyager 1, need to manually input mass and size as NASA does not provide it
+planets.append(planet(ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColour)) ## moonColour is grey, spacecraft are grey, close enough
+ephemeris=horizonsParser.getEphemeris(-32, False, True, 722, 13) # Voyager 2
+planets.append(planet(ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColour))
 
 
-LINE_LENGTH = int(MAX_LINES / (len(planets)-1))
+
+## The -3 here is because of the moon, voyager 1 and 2, which are not usually visible
+LINE_LENGTH = int(MAX_LINES / (len(planets)-3))
 pygame.init()
 screen = pygame.display.set_mode((1920,1080))
 clock = pygame.time.Clock()
