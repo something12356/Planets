@@ -22,12 +22,17 @@ G = 6.6743015*10**-11
 MAX_LINES = 200
 
 ## Centre of screen
-centre = np.array([960.0,540.0,0.0])
+centre = np.array([960.0,540.0])
 
 ## Switching from one zoom to another instantly is very jarring. 
 ## This uses interpolation to smoothly transition between zooms.
 ## I could use linear interpolation but I actually think this non-linear thing looks nicer so I'm using that.
 def zoom(distScale, zoomScale):
+    ## No point for the scale to go anywhere near this,
+    ## so this is in place to prevent any bugs that may occur
+    ## from zooming in very far
+    if zoomScale > 1000:
+        return 1000
     return distScale*0.9 + zoomScale*0.1
 
 ## Takes in a position vector and outputs that vector from the centre of mass scaled by the distance constant.
@@ -39,45 +44,52 @@ def scaledPos(position):
     return com(planets) + distScale * comVector
 
 ## Draws an arrow by drawing a line, picking two points either side of that line, and drawing lines from the end of the first line to those two points
-def drawArrow(colour, startPos, endPos):
+def drawArrow(surface, colour, startPos, endPos):
     vector = (endPos - startPos)[:2]
     length = vec.mag(vector)
     ## My solar system is in 3d space, but pygame can only handle 2d lines.
     ## The [:2] is necessary to deal with that.
-    pygame.draw.aaline(screen, colour, startPos[:2], endPos[:2])
+    pygame.draw.aaline(surface, colour, startPos[:2], endPos[:2])
     ## Generating the two points either side of the line
     norm = vec.normal(vector)
     p1 = startPos[:2] + 0.8*vector[:2] + 0.15*length*norm[:2]
     p2 = startPos[:2] + 0.8*vector[:2] - 0.15*length*norm[:2]
-    pygame.draw.aaline(screen, colour, p1, endPos[:2])
-    pygame.draw.aaline(screen, colour, p2, endPos[:2])
+    pygame.draw.aaline(surface, colour, p1, endPos[:2])
+    pygame.draw.aaline(surface, colour, p2, endPos[:2])
 
-def displayArrows(arrowsToDraw, adjustment):
-    if len(arrowsToDraw) > 0:
-        forceToDraw = arrowsToDraw[-1]
-    while len(arrowsToDraw) > 1:
-        arrow = arrowsToDraw.pop(0)
-        p = arrow[1]
-        if arrow[0] != "white":
-            drawArrow(arrow[0], p.getScaledPos()+adjustment, p.getScaledPos()+(10**-12)*(distScale)*2*arrow[2]/(maths.log(p.getMass())) + adjustment)
-            print(arrow[2]*distScale*10**-12/(maths.log(p.getMass())))
-        else:
-            drawArrow(arrow[0], p.getScaledPos()+adjustment, p.getScaledPos()+(10**-12)*(distScale)*2*arrow[2]/(maths.log(p.getMass()))+adjustment)
+def displayArrows(planets, adjustment, surface, focus, comFocus):
+    ## If no planet is being focused on then there's no arrows to draw
+    if comFocus:
+        return
+    p = planets[focus]
+    for arrow in p.getArrows():
+        drawArrow(surface, arrow[0], p.getScaledPos()[:2]+adjustment, p.getScaledPos()[:2]+(10**-12)*(distScale)*2*arrow[1][:2]/(maths.log(p.getMass()))+adjustment)
 
-def displayLines(planets, adjustment):
+def displayLines(planets, adjustment, focus, surface):
     for p in planets:
-        for index, line in enumerate(p.getLines()):
-            ## Don't draw line of offscreen to avoid lag
-            if offscreen(scaledPos(line[0])+adjustment) and offscreen(scaledPos(line[1])+adjustment):
+        index = -1
+        for line in p.getLines():            
+            index += 1
+            ## Don't draw lines offscreen to avoid lag
+            if offscreen(scaledPos(line[0])[:2]+adjustment) and offscreen(scaledPos(line[1])[:2]+adjustment):
+                continue
+            ## A satellite's lines should not be drawn if its host or itself is not selected
+            ## It is unlikely to be visible and will cause lag if drawn
+            if p.getHost() != planets[focus] and p.getHost() != None and p != planets[focus]:
                 continue
             ## Index ratio is used to reduce opacity and thickness of the older lines 
             ## An index counter is used as python cannot find the index of np arrays with multiple elements
             indexRatio = index/len(p.getLines())
-            pygame.draw.aaline(screen,([int(indexRatio*line[2][i]) for i in range(3)]),scaledPos(line[0])[:2]+adjustment[:2],scaledPos(line[1])[:2]+adjustment[:2],int(indexRatio*255))
+            pygame.draw.aaline(surface,([int(indexRatio*p.getColour()[i]) for i in range(3)]),scaledPos(line[0])[:2]+adjustment,scaledPos(line[1])[:2]+adjustment,int(indexRatio*255))
         
 def drawPlanet(p, position, surface):
-    # if p.getSize()*distScale > 10**-2:
-    pygame.draw.circle(surface,p.getColour(),position,p.getSize()*distScale)
+    ## If the planet would fill the whole screen, there's no point trying to draw
+    ## more of the circle than necessary, just fill the screen.
+    ## This avoids severe lag when zooming in very closely.
+    if p.getSize()*distScale > vec.mag(centre):
+        screen.fill(p.getColour())
+    else:
+        pygame.draw.circle(surface,p.getColour(),position,p.getSize()*distScale)
     
 ## NASA's data on the solar system is all given in 3 dimensional coordinates
 ## So a simulation of 3d space is used for this program. It also leads to a more accurate model.
@@ -86,7 +98,9 @@ def drawPlanet(p, position, surface):
 ## are used for drawing it.
 def displayPlanets(planets, adjustment, surface):
     for p in planets:
-        drawPlanet(p, p.getScaledPos()[:2]+adjustment[:2], surface)
+        if offscreen(p.getScaledPos()[:2]+adjustment):
+            continue
+        drawPlanet(p, p.getScaledPos()[:2]+adjustment, surface)
 
 ## Finds the centre of mass of the sysetm
 def com(planets):
@@ -103,29 +117,28 @@ def focusAdjustment(planets, focus, comFocus):
         currentFocus = com(planets)
     else:
         currentFocus = planets[focus].getPos()
-    focusDisplacement = centre - scaledPos(currentFocus)
+    focusDisplacement = centre - scaledPos(currentFocus)[:2]
     return focusDisplacement
 
-def simulateTick(arrowsToDraw, planets, focus, comFocus):
+def simulateTick(planets, focus):
     for p1 in planets:
         ## Reset energy of planet so it can be recalculated
         p1.addGPE(-p1.getGPE())
         p1.addKE(-p1.getKE())
+
         ## Takes position before and after so that the lines for the orbits can be drawn
         for p2 in planets[planets.index(p1)+1:]:
-            p1p2gravity = p1.gravity(p2)
-            p1.addForce(p1p2gravity)
+            p1gravity = p1.gravity(p2)
+            p1.addForce(p1gravity)
             ## Can take away here due to Newton's third law, each force has equal and opposite reaction force
-            p2.addForce(-p1p2gravity)
+            p2.addForce(-p1gravity)
             ## Draws force arrows showing the forces acting on the planet
-            if planets.index(p1) == focus and not comFocus:
-                arrowsToDraw.append(["white", p1, np.copy(p1p2gravity)])
-            if planets.index(p2) == focus and not comFocus:
-                arrowsToDraw.append(["white", p2, -1*np.copy(p1p2gravity)])
-
-
-        if planets.index(p1) == focus and not comFocus:
-            arrowsToDraw.append([p1.getColour(), p1, np.copy(p1.getResultant())])
+            if planets.index(p1) == focus:
+                p1.addArrow(["white", np.copy(p1gravity)])
+            if planets.index(p2) == focus:
+                p2.addArrow(["white", -1*np.copy(p1gravity)])
+        if planets.index(p1) == focus:
+            p1.addArrow([p1.getColour(), np.copy(p1.getResultant())])
             # arrowsToDraw.append(np.copy(p1.getResultant()))
 
         p1.secondLaw()
@@ -133,11 +146,9 @@ def simulateTick(arrowsToDraw, planets, focus, comFocus):
         ## Uses verlet integration to update velocity and acceleration of planet
         p1.verlet()
         afterPos = np.copy(p1.getPos())
-        p1.addLine([beforePos,afterPos,p1.getColour()])  
+        p1.addLine([beforePos,afterPos])  
         ## Reset the resultant to 0 so it can be calculated again next tick
         p1.addForce(-p1.getResultant())
-
-    return arrowsToDraw
 
 ## Takes in vector, returns False if within the screen, True otherwise
 def offscreen(vector):
@@ -155,6 +166,7 @@ def calculateEnergies(planets):
 
 class celestialBody:
     def __init__(self, size, vel, mass, pos, colour):
+        self.__host = None
         self.__size = size
         self.__vel = vel
         self.__mass = mass
@@ -166,8 +178,12 @@ class celestialBody:
         self.__ke = 0
         self.__gpe = 0
         self.__lines = []
+        self.__arrows = []
     
     ## All the getters and setters
+    def getHost(self):
+        return self.__host
+
     def getPos(self):
         return self.__pos
 
@@ -206,6 +222,16 @@ class celestialBody:
         ## Gets rid of excess lines, prevents them from becoming too long and lagging the system
         if len(self.__lines) > LINE_LENGTH:
             self.__lines = self.__lines[len(self.__lines)-LINE_LENGTH:]
+
+    def getArrows(self):
+        return self.__arrows
+    
+    def addArrow(self, arrow):
+        self.__arrows.append(arrow)
+        ## There should never be more than the amount of planets + 1 arrows at a time,
+        ## if there are, then some have been left over from previous ticks, and should be cleaned up
+        if len(self.__arrows) > len(planets)+1:
+            self.__arrows = self.__arrows[len(self.__arrows)-len(planets)-1:]
 
     ## Adds a force to the resultant force on the planet
     def addForce(self, force):
@@ -258,7 +284,7 @@ class satellite(celestialBody):
 
     ## Adds the host's postion to the line so that it can be displayed, then returns that
     def getLines(self):
-        updatedLines = [[i[j]+self.getHost().getPos() for j in range(2)]+[i[2]] for i in self.__lines]
+        updatedLines = [[i[j]+self.getHost().getPos() for j in range(2)] for i in self.__lines]
         return updatedLines
 
     ## hostLine is the line drawn for the host on the current tick.
@@ -273,11 +299,18 @@ class satellite(celestialBody):
             self.__lines = self.__lines[len(self.__lines)-LINE_LENGTH:]
 
 planets = []
-planetColours = [(255, 255, 0), (65, 68, 74), (139, 115, 85), (0, 0, 255), (255, 99, 47), (250, 164, 87), (195, 146, 79), (98, 174, 230), (67, 109, 252)]
+planetColours = [(255, 255, 0), (65, 68, 74), (139, 115, 85), (0, 0, 255), (255, 99, 47), (250, 164, 87), (195, 146, 79), (98, 174, 230), (67, 109, 252), (111, 109, 114)]
+## I do not want to add all 100+ moons of Jupiter, Saturn, Uranus and Neptune, hence only the important one, our moon, is added
+moonColour = (111, 109, 114)
+## The satellites, in order, are:
 sunEphemeris = horizonsParser.getEphemeris(10)
 planets.append(planet(sunEphemeris[0], sunEphemeris[1], sunEphemeris[2], sunEphemeris[3], planetColours[0]))
 for i in range(1, 9):
     ephemeris = horizonsParser.getEphemeris(i*100+99)
+    ## This is adding the moon
+    if i == 4:
+        moonEphemeris = horizonsParser.getEphemeris(301)
+        planets.append(satellite(moonEphemeris[0], moonEphemeris[1], moonEphemeris[2], moonEphemeris[3], moonColour, planets[3]))
     ## For some reason, Jupiter's mass is given in grams by NASA
     ## Despite all other masses being given in kilograms
     ## I do not know why
@@ -286,7 +319,8 @@ for i in range(1, 9):
         ephemeris[2] = ephemeris[2]/1000
     planets.append(planet(ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[i]))
 
-LINE_LENGTH = int(MAX_LINES / len(planets))
+
+LINE_LENGTH = int(MAX_LINES / (len(planets)-1))
 pygame.init()
 screen = pygame.display.set_mode((1920,1080))
 clock = pygame.time.Clock()
@@ -346,8 +380,8 @@ while running:
                     zoomScale = zoomScale*0.3 + distScale*0.7
                 zoomScale -= 0.4*zoomScale
 
-    ## Works out gravitational force between all planets and moves them according each tick
-    arrowsToDraw = simulateTick(arrowsToDraw, planets, focus, comFocus)
+    ## Works out gravitational force between all planets and moves them accordingly each tick
+    simulateTick(planets, focus)
     distScale = zoom(distScale, zoomScale)
     ## focusAdjustment makes it so that the screen follows whichever planet the user wants to look at
     ## Alternatively, follows the centre of mass, useful for binary star systems
@@ -364,9 +398,9 @@ while running:
             pygame.draw.aaline(screen, "blue", [960+i,0], [960+i,1080])
     else:
         displayPlanets(planets, focusAdjustment(planets, focus, comFocus), screen)
-        displayLines(planets, focusAdjustment(planets, focus, comFocus))
+        displayLines(planets, focusAdjustment(planets, focus, comFocus), focus, screen)
         if arrows:
-            displayArrows(arrowsToDraw, focusAdjustment(planets, focus, comFocus))
+            displayArrows(planets, focusAdjustment(planets, focus, comFocus), screen, focus, comFocus)
     energies = calculateEnergies(planets)
     print("GPE:", f'{energies[0]:.2e}')
     print("KE:", f'{energies[1]:.2e}')
