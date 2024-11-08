@@ -120,11 +120,12 @@ def focusAdjustment(planets, focus, comFocus):
     focusDisplacement = centre - scaledPos(currentFocus)[:2]
     return focusDisplacement
 
-def simulateTick(planets, focus):
+def simulateTick(planets, focus, timeScale):
     for p1 in planets:
         ## Reset energy of planet so it can be recalculated
         p1.addGPE(-p1.getGPE())
         p1.addKE(-p1.getKE())
+        p1.addMomentum(-p1.getMomentum())
 
         ## Takes position before and after so that the lines for the orbits can be drawn
         for p2 in planets[planets.index(p1)+1:]:
@@ -144,7 +145,7 @@ def simulateTick(planets, focus):
         p1.secondLaw()
         beforePos = np.copy(p1.getPos())
         ## Uses verlet integration to update velocity and acceleration of planet
-        p1.verlet()
+        p1.verlet(timeScale)
         afterPos = np.copy(p1.getPos())
         p1.addLine([beforePos,afterPos])  
         ## Reset the resultant to 0 so it can be calculated again next tick
@@ -156,13 +157,16 @@ def offscreen(vector):
         return False
     return True
 
-def calculateEnergies(planets):
+## This is so that the program can demonstrate that momentum and energy are conserved
+def sumPhysicalProperties(planets):
     gpe = 0
     ke = 0
+    momentum = 0
     for p in planets:
         gpe += p.getGPE()
         ke += p.getKE()
-    return [gpe, ke]
+        momentum += p.getMomentum()
+    return [gpe, ke, momentum]
 
 class celestialBody:
     def __init__(self, size, vel, mass, pos, colour):
@@ -177,6 +181,7 @@ class celestialBody:
         ## KE and GPE are standard acronyms for kinetic energy and gravitational potential energy
         self.__ke = 0
         self.__gpe = 0
+        self.__momentum = 0
         self.__lines = []
         self.__arrows = []
     
@@ -214,6 +219,9 @@ class celestialBody:
     def getKE(self):
         return self.__ke
 
+    def getMomentum(self):
+        return self.__momentum
+
     def getLines(self):
         return self.__lines
 
@@ -243,6 +251,9 @@ class celestialBody:
     def addKE(self, energy):
         self.__ke += energy
 
+    def addMomentum(self, momentum):
+        self.__momentum += momentum
+
     ## Sets velocity
     ## Uses F = ma to find acceleration, add to vel
     def secondLaw(self):
@@ -250,21 +261,26 @@ class celestialBody:
    
     ## Sets position
     ## Updates velocity and then moves a planet by its velocity
-    def verlet(self):
+    def verlet(self, timeScale):
         self.__vel += self.getAccel()*timeScale
         self.__pos += self.getVel()*timeScale
         self.addKE(0.5*self.getMass()*vec.mag(self.getVel())**2)
+        self.addMomentum(self.getMass()*self.getVel())
 
     ## End of getters and setters
 
     ## Uses F = GMm/r**2 to work out the force on a planet
-    ## Breaks it into components by doing F*adj/hyp, F*opp/hyp (Fcos(a) and Fsin(a))
+    ## Multiplies by unit(r) to make the force a vector.
     def gravity(self, planet2):
         r = planet2.getPos() - self.getPos()
         F = G*(self.getMass()*planet2.getMass())/(vec.mag(r)**2)
-        self.addGPE(-1*F*vec.mag(r))
-        return np.array([F*i/vec.mag(r) for i in r])
+        self.addGPE(-F*vec.mag(r))
+        planet2.addGPE(F*vec.mag(r))
+        return F*vec.unit(r)
 
+## The distinction between planet and satellite here is just whether or not
+## they have a specific host. This has no relation to actual planets in real life
+## The sun is a planet in my code.
 class planet(celestialBody):
     pass
 
@@ -323,8 +339,6 @@ ephemeris=horizonsParser.getEphemeris(-31, False, True, 722, 13) # Voyager 1, ne
 planets.append(planet(ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColour)) ## moonColour is grey, spacecraft are grey, close enough
 ephemeris=horizonsParser.getEphemeris(-32, False, True, 722, 13) # Voyager 2
 planets.append(planet(ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColour))
-
-
 
 ## The -3 here is because of the moon, voyager 1 and 2, which are not usually visible
 LINE_LENGTH = int(MAX_LINES / (len(planets)-3))
@@ -388,7 +402,7 @@ while running:
                 zoomScale -= 0.4*zoomScale
 
     ## Works out gravitational force between all planets and moves them accordingly each tick
-    simulateTick(planets, focus)
+    simulateTick(planets, focus, timeScale)
     distScale = zoom(distScale, zoomScale)
     ## focusAdjustment makes it so that the screen follows whichever planet the user wants to look at
     ## Alternatively, follows the centre of mass, useful for binary star systems
@@ -408,10 +422,15 @@ while running:
         displayLines(planets, focusAdjustment(planets, focus, comFocus), focus, screen)
         if arrows:
             displayArrows(planets, focusAdjustment(planets, focus, comFocus), screen, focus, comFocus)
-    energies = calculateEnergies(planets)
-    print("GPE:", f'{energies[0]:.2e}')
-    print("KE:", f'{energies[1]:.2e}')
-    print("TOTAL:", f'{energies[0]+energies[1]:.2e}')
+
+    ## Properties includes the key physical attributes of the system, potential energy, kinetic energy, momenteum
+    properties = sumPhysicalProperties(planets)
+    print("GPE:", f'{properties[0]:.2e}')
+    print("KE:", f'{properties[1]:.2e}')
+    print("TOTAL ENERGY:", f'{properties[0]+properties[1]:.2e}')
+    ## Momentum is a vector quantity but year 11s are not taught to actually use it as a multi-dimensional vector
+    ## So I just display its magnitude
+    print("TOTAL MOMENTUM:", f'{vec.mag(properties[2]):.2e}')
     print('---')
 
     pygame.display.flip()

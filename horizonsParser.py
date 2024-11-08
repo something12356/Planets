@@ -67,22 +67,23 @@ def getEphemeris(target, useGM=False, ignoreMassSize=False, mass=0, size=0):
             ## Thankfully radius is the same for both planets and the sun, so it can just be extracted the same way
             if response.text[i:i+16].lower() == 'vol. mean radius' or response.text[i:i+16].lower() == 'mean radius (km)':
                 size = extractValue(response.text[i:i+50], False, 1000)
-        
+
         if response.text[i:i+3] in ['X =','Y =','Z =','VX=','VY=','VZ=']:
             if count < 3:
                 position[count] = extractValue(response.text[i:i+40], False, 1000)
             else:
                 velocity[count-3] = extractValue(response.text[i:i+40], False, 1000)
-            if count == 5:
             ## NASA provides a list of coordinates of where the planet will be over the
             ## next few days. This is not necessary for our purposes as we just need initial
             ## conditions and then the rest will be simulated from there, so after
             ## the velocity is found, the loop breaks.
-                break
             count += 1
+        if count == 6:
+            break
 
     return [size, velocity, mass, position]
 
+## Testing to see if the parser works before implementing it in main program
 def main():
     print(getEphemeris(502, True))
 
