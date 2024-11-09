@@ -1,5 +1,7 @@
 import math as maths
 import pygame
+import pygame_menu
+from pygame_menu import themes
 import numpy as np
 import vectors as vec
 import horizonsParser
@@ -168,8 +170,9 @@ def sumPhysicalProperties(planets):
     return [gpe, ke, momentum]
 
 class celestialBody:
-    def __init__(self, size, mass, pos, vel, colour):
+    def __init__(self, name, size, mass, pos, vel, colour):
         self.__host = None
+        self.__name = name
         self.__size = size
         self.__vel = vel
         self.__mass = mass
@@ -187,6 +190,9 @@ class celestialBody:
     ## All the getters and setters
     def getHost(self):
         return self.__host
+
+    def getName(self):
+        return self.__name
 
     def getPos(self):
         return self.__pos
@@ -253,6 +259,9 @@ class celestialBody:
     def addMomentum(self, momentum):
         self.__momentum += momentum
 
+    def addMass(self, mass):
+        self.__mass += mass
+
     ## Sets velocity
     ## Uses F = ma to find acceleration, add to vel
     def secondLaw(self):
@@ -288,8 +297,8 @@ class planet(celestialBody):
 ## This is more useful as it is not easy to see how the satellite orbits its planet otherwise
 ## The "host" attribute is a planet object, aggregation is used to access the host's attributes
 class satellite(celestialBody):
-    def __init__(self, size, vel, mass, pos, colour, host):
-        super().__init__(size, vel, mass, pos, colour)
+    def __init__(self, name, size, mass, pos, vel, colour, host):
+        super().__init__(name, size, mass, pos, vel, colour)
         self.__host = host
         self.__resultant = 0
         self.__lines = []
@@ -313,31 +322,34 @@ class satellite(celestialBody):
         if len(self.__lines) > LINE_LENGTH:
             self.__lines = self.__lines[len(self.__lines)-LINE_LENGTH:]
 
+## This list contains the name, NASA ID and colour of all the planets
 planets = []
+
+planetNames = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"]
 planetColours = [(255, 255, 0), (65, 68, 74), (139, 115, 85), (0, 0, 255), (255, 99, 47), (250, 164, 87), (195, 146, 79), (98, 174, 230), (67, 109, 252), (111, 109, 114)]
 ## I do not want to add all 100+ moons of Jupiter, Saturn, Uranus and Neptune, hence only the important one, our moon, is added
 moonColour = (111, 109, 114)
 ## The satellites, in order, are:
 sunEphemeris = horizonsParser.getEphemeris(10)
-planets.append(planet(sunEphemeris[0], sunEphemeris[1], sunEphemeris[2], sunEphemeris[3], planetColours[0]))
+planets.append(planet("Sun", sunEphemeris[0], sunEphemeris[1], sunEphemeris[2], sunEphemeris[3], planetColours[0]))
 for i in range(1, 9):
     ephemeris = horizonsParser.getEphemeris(i*100+99)
-    ## This is adding the moon
+    ## This is adding the moon, it makes sense for it to be just after earth in the planet order
     if i == 4:
         moonEphemeris = horizonsParser.getEphemeris(301)
-        planets.append(satellite(moonEphemeris[0], moonEphemeris[1], moonEphemeris[2], moonEphemeris[3], moonColour, planets[3]))
+        planets.append(satellite("Moon", moonEphemeris[0], moonEphemeris[1], moonEphemeris[2], moonEphemeris[3], moonColour, planets[3]))
     ## For some reason, Jupiter's mass is given in grams by NASA
     ## Despite all other masses being given in kilograms
     ## I do not know why
     ## This resolves that problem
     if i == 5:
         ephemeris[1] = ephemeris[1]/1000
-    planets.append(planet(ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[i]))
-## Adding a few prominent satellites (voyager 1&2)
+    planets.append(planet(planetNames[i], ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[i]))
+# Adding a few prominent satellites (voyager 1&2)
 ephemeris=horizonsParser.getEphemeris(-31, False, True, 722, 13) # Voyager 1, need to manually input mass and size as NASA does not provide it
-planets.append(planet(ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColour)) ## moonColour is grey, spacecraft are grey, close enough
+planets.append(planet("Voyager 1", ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColour)) ## moonColour is grey, spacecraft are grey, close enough
 ephemeris=horizonsParser.getEphemeris(-32, False, True, 722, 13) # Voyager 2
-planets.append(planet(ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColour))
+planets.append(planet("Voyager 2", ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColour))
 
 ## The -3 here is because of the moon, voyager 1 and 2, which are not usually visible
 LINE_LENGTH = int(MAX_LINES / (len(planets)-3))
@@ -353,6 +365,11 @@ comparison = False
 planetsToCompare = [0, 5]
 comparisonSurface1 = pygame.Surface((957, 1080))
 comparisonSurface2 = pygame.Surface((957, 1080))
+font = pygame.font.SysFont('codenewroman', 18)
+menuSurface1 = pygame.Surface((400, 600), pygame.SRCALPHA)
+menuSurface2 = pygame.Surface((400, 600), pygame.SRCALPHA)
+menuSurface1.set_alpha(128)
+menuSurface2.set_alpha(128)
 
 while running:
     screen.fill((0,0,0))
@@ -423,13 +440,42 @@ while running:
 
     ## Properties includes the key physical attributes of the system, potential energy, kinetic energy, momenteum
     properties = sumPhysicalProperties(planets)
-    print("GPE:", f'{properties[0]:.2e}')
-    print("KE:", f'{properties[1]:.2e}')
-    print("TOTAL ENERGY:", f'{properties[0]+properties[1]:.2e}')
-    ## Momentum is a vector quantity but year 11s are not taught to actually use it as a multi-dimensional vector
-    ## So I just display its magnitude
-    print("TOTAL MOMENTUM:", f'{vec.mag(properties[2]):.2e}')
-    print('---')
+
+    ## Displaying the menu
+    ## This is absolutely horrible code but it was the best way I could figure out of doing it
+
+    ## Menu surface 1 is for displaying the energies
+    ## Menu surface 2 is for the interactive bit, displaying planet info and changing things about the planet / physical constants
+    ## The reason I have multiple textSurfaces is because pygame does not seem to support the "\n" character,
+    ## so this is the only way I could get new lines.
+    pygame.draw.rect(menuSurface1, 'black', (0, 0, 300, 125))
+    text1 = "GPE: " + f'{properties[0]:.2e} J'
+    text2 = "KE: " + f'{properties[1]:.2e} J'
+    text3 = "TOTAL ENERGY: " + f'{properties[0]+properties[1]:.2e} J'
+    text4 = "TOTAL MOMENTUM: " + f'{vec.mag(properties[2]):.2e} Ns'
+    textSurface1 = font.render(text1, True, (0, 255, 255))
+    textSurface2 = font.render(text2, True, (0, 255, 255))
+    textSurface3 = font.render(text3, True, (0, 255, 255))
+    textSurface4 = font.render(text4, True, (0, 255, 255))
+    screen.blit(menuSurface1, (0, 0))
+    screen.blit(textSurface1, (20, 20))
+    screen.blit(textSurface2, (20, 40))
+    screen.blit(textSurface3, (20, 60))
+    screen.blit(textSurface4, (20, 80))
+
+    pygame.draw.rect(menuSurface2, 'black', (0, 0, 300, 125))
+    ## Display info on current planet as requested by client
+    if not comFocus:
+        text5 = "PLANET: " + f'{planets[focus].getName()}'
+        text6 = "MASS: " + f'{planets[focus].getMass():.2e} kg'
+        text7 = "RADIUS: " + f'{planets[focus].getSize()/1000:.2e} km'
+        textSurface5 = font.render(text5, True, (0, 255, 255))
+        textSurface6 = font.render(text6, True, (0, 255, 255))
+        textSurface7 = font.render(text7, True, (0, 255, 255))
+        screen.blit(menuSurface2, (1620, 0))
+        screen.blit(textSurface5, (1640, 20))
+        screen.blit(textSurface6, (1640, 40))
+        screen.blit(textSurface7, (1640, 60))
 
     pygame.display.flip()
     clock.tick(framerate)
