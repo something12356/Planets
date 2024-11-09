@@ -28,10 +28,9 @@ centre = np.array([960.0,540.0])
 ## This uses interpolation to smoothly transition between zooms.
 ## I could use linear interpolation but I actually think this non-linear thing looks nicer so I'm using that.
 def zoom(distScale, zoomScale):
-    ## No point for the scale to go anywhere near this,
-    ## so this is in place to prevent any bugs that may occur
-    ## from zooming in very far
-    if zoomScale > 1000:
+    ## No point for the scale to go anywhere near 1000,
+    ## so this is in place to prevent any bugs that may occur from zooming in very far
+    if distScale*0.9+zoomScale*0.1 > 1000:
         return 1000
     return distScale*0.9 + zoomScale*0.1
 
@@ -169,7 +168,7 @@ def sumPhysicalProperties(planets):
     return [gpe, ke, momentum]
 
 class celestialBody:
-    def __init__(self, size, vel, mass, pos, colour):
+    def __init__(self, size, mass, pos, vel, colour):
         self.__host = None
         self.__size = size
         self.__vel = vel
@@ -332,7 +331,7 @@ for i in range(1, 9):
     ## I do not know why
     ## This resolves that problem
     if i == 5:
-        ephemeris[2] = ephemeris[2]/1000
+        ephemeris[1] = ephemeris[1]/1000
     planets.append(planet(ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[i]))
 ## Adding a few prominent satellites (voyager 1&2)
 ephemeris=horizonsParser.getEphemeris(-31, False, True, 722, 13) # Voyager 1, need to manually input mass and size as NASA does not provide it
@@ -377,7 +376,6 @@ while running:
                 arrows = not arrows
             if event.key == pygame.K_i:
                 G += 0.01*G
-                print(G)
             if event.key == pygame.K_y:
                 if len(planets) == 9:
                     sun = planets[0]

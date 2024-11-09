@@ -43,16 +43,28 @@ def getEphemeris(target, useGM=False, ignoreMassSize=False, mass=0, size=0):
     target = str(target)
     startTime = datetime.datetime.now().strftime("%Y-%m-%d")
     stopTime = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-    response = requests.get("https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='"+target+"'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&START_TIME='"+startTime+"'&STOP_TIME='"+stopTime+"'&CENTER='500@0'&STEP_SIZE='1%20d'&QUANTITIES='1,9,20,23,24,29'")
+    response = requests.get("https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='"+target+"'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&START_TIME='"+startTime+"'&STOP_TIME='"+stopTime+"'&CENTER='500@0'&STEP_SIZE='1%20d'&QUANTITIES=''")
 
     position = np.array([0.0, 0.0, 0.0])
     velocity = np.array([0.0, 0.0, 0.0])
-    count = 0
+    ## The dictionaries are used to ensure we update the correct element of the vector
+    posDict = {
+        'X =':0,
+        'Y =':1,
+        'Z =':2,
+    }
+    velDict = {
+        'VX=':0,
+        'VY=':1,
+        'VZ=':2
+    }
 
     for i in range(len(response.text)):
+        ## Sometimes it's convenient to manually set the mass and size, as a lot of the time they're not given by the ephemeris
+        ## so that's why ignoreMassSize is a thing
         if not ignoreMassSize:
             if not useGM:
-                # Mass is in kg, so no multiplying by a factor of 10 is needed
+                ## Mass is in kg, so no multiplying by a factor of 10 is needed
                 if response.text[i:i+6].lower() == 'mass x' or response.text[i:i+6].lower() == 'mass, ':
                     mass = extractValue(response.text[i:i+50],True)
 
@@ -64,24 +76,22 @@ def getEphemeris(target, useGM=False, ignoreMassSize=False, mass=0, size=0):
             else:
                 if response.text[i:i+6].lower() == 'gm, km' or response.text[i:i+6].lower() == 'gm   (' or response.text[i:i+6].lower() == 'gm (km':
                     mass = extractValue(response.text[i+20:i+50], False, 1/(6.6743015*10**-20))
-            ## Thankfully radius is the same for both planets and the sun, so it can just be extracted the same way
             if response.text[i:i+16].lower() == 'vol. mean radius' or response.text[i:i+16].lower() == 'mean radius (km)':
                 size = extractValue(response.text[i:i+50], False, 1000)
 
-        if response.text[i:i+3] in ['X =','Y =','Z =','VX=','VY=','VZ=']:
-            if count < 3:
-                position[count] = extractValue(response.text[i:i+40], False, 1000)
-            else:
-                velocity[count-3] = extractValue(response.text[i:i+40], False, 1000)
+        if response.text[i:i+3] in posDict:
+            position[posDict[response.text[i:i+3]]] = extractValue(response.text[i:i+40], False, 1000)
+
+        if response.text[i:i+3] in velDict:
+            velocity[velDict[response.text[i:i+3]]] = extractValue(response.text[i:i+40], False, 1000)
             ## NASA provides a list of coordinates of where the planet will be over the
             ## next few days. This is not necessary for our purposes as we just need initial
             ## conditions and then the rest will be simulated from there, so after
-            ## the velocity is found, the loop breaks.
-            count += 1
-        if count == 6:
-            break
+            ## the final element of velocity is found, the loop breaks.
+            if velocity[2] != 0:
+                break
 
-    return [size, velocity, mass, position]
+    return [size, mass, position, velocity]
 
 ## Testing to see if the parser works before implementing it in main program
 def main():
