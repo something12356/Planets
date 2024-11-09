@@ -16,14 +16,15 @@ def extractValue(text, expectingScale=False, conversionFactor=1):
                     if not text[i+j].isdigit():
                         scale = eval(text[i-2:i+j].replace('^','**'))
                         break
-                scaleAt = i
+                scaleAt = i+j
                 break
 
     ## Once a digit is found it loops until a non-digit character is found. This string is taken to be the value.
-    for i in range(scaleAt+3,40):
+    for i in range(scaleAt+1,40):
         ## The text[i] == '-' is so negatives are included
         if text[i].isdigit() or text[i] == '-':
             for j in range(1,50):
+                ## Preventing index out of range errors
                 if i+j >= 50:
                     break
                 ## The E, + and - being allowed is for scientific notation, because velocity and position,

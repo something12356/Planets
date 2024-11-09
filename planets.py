@@ -64,7 +64,7 @@ def displayArrows(planets, adjustment, surface, focus, comFocus):
     for arrow in p.getArrows():
         drawArrow(surface, arrow[0], p.getScaledPos()[:2]+adjustment, p.getScaledPos()[:2]+(10**-12)*(distScale)*2*arrow[1][:2]/(maths.log(p.getMass()))+adjustment)
 
-def displayLines(planets, adjustment, focus, surface):
+def displayLines(planets, adjustment, focus, comFocus, surface):
     for p in planets:
         index = -1
         for line in p.getLines():            
@@ -74,7 +74,7 @@ def displayLines(planets, adjustment, focus, surface):
                 continue
             ## A satellite's lines should not be drawn if its host or itself is not selected
             ## It is unlikely to be visible and will cause lag if drawn
-            if p.getHost() != planets[focus] and p.getHost() != None and p != planets[focus]:
+            if p.getHost() != None and (p.getHost() != planets[focus] and p != planets[focus] or comFocus):
                 continue
             ## Index ratio is used to reduce opacity and thickness of the older lines 
             ## An index counter is used as python cannot find the index of np arrays with multiple elements
@@ -417,7 +417,7 @@ while running:
             pygame.draw.aaline(screen, "blue", [960+i,0], [960+i,1080])
     else:
         displayPlanets(planets, focusAdjustment(planets, focus, comFocus), screen)
-        displayLines(planets, focusAdjustment(planets, focus, comFocus), focus, screen)
+        displayLines(planets, focusAdjustment(planets, focus, comFocus), focus, comFocus, screen)
         if arrows:
             displayArrows(planets, focusAdjustment(planets, focus, comFocus), screen, focus, comFocus)
 
