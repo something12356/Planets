@@ -10,21 +10,18 @@ framerate = 120
 ## Time-scale, how much vel and position should change per tick
 ## Lower value = slower but more accurate simulation
 YEAR = 31536000/framerate
-timeScale = 0*YEAR
+timeScale = 0
 ## The distance constant is used to translate SI units (metres) into pixels.
 ## 2 * 10**-12 means that the earth is about 30 pixels from the sun, for reference.
 distScale = 4 * 10**-9
 zoomScale = distScale
 x = 0
 y = 1
-## Gravitational constant, defines how strong gravity is. Real life G = 
+## Gravitational constant, defines how strong gravity is. Real life G = 6.6743015*10**-11
 G = 6.6743015*10**-11
 
 ## How long to draw the lines representing the planets' orbits.
 MAX_LINES = 200
-
-## Centre of screen
-centre = np.array([960.0,540.0])
 
 ## Switching from one zoom to another instantly is very jarring. 
 ## This uses interpolation to smoothly transition between zooms.
@@ -69,7 +66,12 @@ def displayArrows(planets, adjustment, surface, focus, comFocus):
 def displayLines(planets, adjustment, focus, comFocus, surface):
     for p in planets:
         index = -1
-        for line in p.getLines():            
+        orbitalPath = p.getRecords()
+        for i in range(len(orbitalPath)-1):
+            line = [orbitalPath[i],orbitalPath[i+1]]
+            # print(line[0])
+            # print(adjustment)
+            # print('---')
             index += 1
             ## Don't draw lines offscreen to avoid lag
             if offscreen(scaledPos(line[0])[:2]+adjustment) and offscreen(scaledPos(line[1])[:2]+adjustment):
@@ -80,7 +82,7 @@ def displayLines(planets, adjustment, focus, comFocus, surface):
                 continue
             ## Index ratio is used to reduce opacity and thickness of the older lines 
             ## An index counter is used as python cannot find the index of np arrays with multiple elements
-            indexRatio = index/len(p.getLines())
+            indexRatio = index/len(orbitalPath)
             pygame.draw.aaline(surface,([int(indexRatio*p.getColour()[i]) for i in range(3)]),scaledPos(line[0])[:2]+adjustment,scaledPos(line[1])[:2]+adjustment,int(indexRatio*255))
         
 def drawPlanet(p, position, surface):
@@ -144,11 +146,10 @@ def simulateTick(planets, focus, timeScale):
             # arrowsToDraw.append(np.copy(p1.getResultant()))
 
         p1.secondLaw()
-        beforePos = np.copy(p1.getPos())
         ## Uses verlet integration to update velocity and acceleration of planet
         p1.verlet(timeScale)
-        afterPos = np.copy(p1.getPos())
-        p1.addLine([beforePos,afterPos])  
+        ## Add a record of the planet's position so we can draw orbital lines.
+        p1.addRecord(np.copy(p1.getPos()))
         ## Reset the resultant to 0 so it can be calculated again next tick
         p1.addForce(-p1.getResultant())
 
@@ -184,7 +185,7 @@ class celestialBody:
         self.__ke = 0
         self.__gpe = 0
         self.__momentum = 0
-        self.__lines = []
+        self.__records = []
         self.__arrows = []
     
     ## All the getters and setters
@@ -227,14 +228,14 @@ class celestialBody:
     def getMomentum(self):
         return self.__momentum
 
-    def getLines(self):
-        return self.__lines
+    def getRecords(self):
+        return self.__records
 
-    def addLine(self, line):
-        self.__lines.append(line)
+    def addRecord(self, record):
+        self.__records.append(record)
         ## Gets rid of excess lines, prevents them from becoming too long and lagging the system
-        if len(self.__lines) > LINE_LENGTH:
-            self.__lines = self.__lines[len(self.__lines)-LINE_LENGTH:]
+        if len(self.__records) > LINE_LENGTH:
+            self.__records = self.__records[len(self.__records)-LINE_LENGTH:]
 
     def getArrows(self):
         return self.__arrows
@@ -301,38 +302,36 @@ class satellite(celestialBody):
         super().__init__(name, size, mass, pos, vel, colour)
         self.__host = host
         self.__resultant = 0
-        self.__lines = []
+        self.__records = []
 
     def getHost(self):
         return self.__host
 
     ## Adds the host's postion to the line so that it can be displayed, then returns that
-    def getLines(self):
-        updatedLines = [[i[j]+self.getHost().getPos() for j in range(2)] for i in self.__lines]
-        return updatedLines
+    def getRecords(self):
+        updatedRecords = [i+self.getHost().getPos() for i in self.__records]
+        return updatedRecords
 
     ## hostLine is the line drawn for the host on the current tick.
     ## Subtracting this from the line for our satellite "removes" the movement of the host.
     ## This leaves only the movement of the satellite around the host.
-    def addLine(self, line):
-        hostLine = self.getHost().getLines()[-1]
-        line[0] = line[0] - hostLine[0]
-        line[1] = line[1] - hostLine[1]
-        self.__lines.append(line)
-        if len(self.__lines) > LINE_LENGTH:
-            self.__lines = self.__lines[len(self.__lines)-LINE_LENGTH:]
+    def addRecord(self, record):
+        hostRecord = self.getHost().getRecords()[-1]
+        record = record - hostRecord
+        self.__records.append(record)
+        if len(self.__records) > LINE_LENGTH:
+            self.__records = self.__records[len(self.__records)-LINE_LENGTH:]
 
 ## This list contains the name, NASA ID and colour of all the planets
 planets = []
 
-planetNames = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"]
-planetColours = [(255, 255, 0), (65, 68, 74), (139, 115, 85), (0, 0, 255), (255, 99, 47), (250, 164, 87), (195, 146, 79), (98, 174, 230), (67, 109, 252), (111, 109, 114)]
+planetNames = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
+planetColours = [(255, 255, 0), (65, 68, 74), (139, 115, 85), (0, 0, 255), (255, 99, 47), (250, 164, 87), (195, 146, 79), (98, 174, 230), (67, 109, 252), (204, 168, 132)]
 ## I do not want to add all 100+ moons of Jupiter, Saturn, Uranus and Neptune, hence only the important one, our moon, is added
 moonColour = (111, 109, 114)
-## The satellites, in order, are:
-sunEphemeris = horizonsParser.getEphemeris(10)
-planets.append(planet("Sun", sunEphemeris[0], sunEphemeris[1], sunEphemeris[2], sunEphemeris[3], planetColours[0]))
-for i in range(1, 9):
+ephemeris = horizonsParser.getEphemeris(10) ## Adding the sun
+planets.append(planet(planetNames[0], ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[0]))
+for i in range(1, 10):
     ephemeris = horizonsParser.getEphemeris(i*100+99)
     ## This is adding the moon, it makes sense for it to be just after earth in the planet order
     if i == 4:
@@ -351,10 +350,12 @@ planets.append(planet("Voyager 1", ephemeris[0], ephemeris[1], ephemeris[2], eph
 ephemeris=horizonsParser.getEphemeris(-32, False, True, 722, 13) # Voyager 2
 planets.append(planet("Voyager 2", ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColour))
 
-## The -3 here is because of the moon, voyager 1 and 2, which are not usually visible
+## The -3 here is because of the moon, voyager 1 and 2, which are not usually visible and so will not cause extra lag from their orbital paths
 LINE_LENGTH = int(MAX_LINES / (len(planets)-3))
 pygame.init()
-screen = pygame.display.set_mode((1920,1080))
+screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
+## Centre of screen
+centre = np.array(pygame.display.get_surface().get_size())/2
 clock = pygame.time.Clock()
 running = True
 arrowsToDraw = []
@@ -362,7 +363,7 @@ focus = 0
 comFocus = False
 arrows = False
 comparison = False
-planetsToCompare = [0, 5]
+planetsToCompare = [3, 4]
 comparisonSurface1 = pygame.Surface((957, 1080))
 comparisonSurface2 = pygame.Surface((957, 1080))
 font = pygame.font.SysFont('codenewroman', 18)
@@ -438,44 +439,44 @@ while running:
         if arrows:
             displayArrows(planets, focusAdjustment(planets, focus, comFocus), screen, focus, comFocus)
 
-    ## Properties includes the key physical attributes of the system, potential energy, kinetic energy, momenteum
-    properties = sumPhysicalProperties(planets)
+        ## Properties includes the key physical attributes of the system, potential energy, kinetic energy, momenteum
+        properties = sumPhysicalProperties(planets)
 
-    ## Displaying the menu
-    ## This is absolutely horrible code but it was the best way I could figure out of doing it
+        ## Displaying the menu
+        ## This is absolutely horrible code but it was the best way I could figure out of doing it
 
-    ## Menu surface 1 is for displaying the energies
-    ## Menu surface 2 is for the interactive bit, displaying planet info and changing things about the planet / physical constants
-    ## The reason I have multiple textSurfaces is because pygame does not seem to support the "\n" character,
-    ## so this is the only way I could get new lines.
-    pygame.draw.rect(menuSurface1, 'black', (0, 0, 300, 125))
-    text1 = "GPE: " + f'{properties[0]:.2e} J'
-    text2 = "KE: " + f'{properties[1]:.2e} J'
-    text3 = "TOTAL ENERGY: " + f'{properties[0]+properties[1]:.2e} J'
-    text4 = "TOTAL MOMENTUM: " + f'{vec.mag(properties[2]):.2e} Ns'
-    textSurface1 = font.render(text1, True, (0, 255, 255))
-    textSurface2 = font.render(text2, True, (0, 255, 255))
-    textSurface3 = font.render(text3, True, (0, 255, 255))
-    textSurface4 = font.render(text4, True, (0, 255, 255))
-    screen.blit(menuSurface1, (0, 0))
-    screen.blit(textSurface1, (20, 20))
-    screen.blit(textSurface2, (20, 40))
-    screen.blit(textSurface3, (20, 60))
-    screen.blit(textSurface4, (20, 80))
+        ## Menu surface 1 is for displaying the energies
+        ## Menu surface 2 is for the interactive bit, displaying planet info and changing things about the planet / physical constants
+        ## The reason I have multiple textSurfaces is because pygame does not seem to support the "\n" character,
+        ## so this is the only way I could get new lines.
+        pygame.draw.rect(menuSurface1, 'black', (0, 0, 300, 125))
+        text1 = "GPE: " + f'{properties[0]:.2e} J'
+        text2 = "KE: " + f'{properties[1]:.2e} J'
+        text3 = "TOTAL ENERGY: " + f'{properties[0]+properties[1]:.2e} J'
+        text4 = "TOTAL MOMENTUM: " + f'{vec.mag(properties[2]):.2e} Ns'
+        textSurface1 = font.render(text1, True, (0, 255, 255))
+        textSurface2 = font.render(text2, True, (0, 255, 255))
+        textSurface3 = font.render(text3, True, (0, 255, 255))
+        textSurface4 = font.render(text4, True, (0, 255, 255))
+        screen.blit(menuSurface1, (0, 0))
+        screen.blit(textSurface1, (20, 20))
+        screen.blit(textSurface2, (20, 40))
+        screen.blit(textSurface3, (20, 60))
+        screen.blit(textSurface4, (20, 80))
 
-    pygame.draw.rect(menuSurface2, 'black', (0, 0, 300, 125))
-    ## Display info on current planet as requested by client
-    if not comFocus:
-        text5 = "PLANET: " + f'{planets[focus].getName()}'
-        text6 = "MASS: " + f'{planets[focus].getMass():.2e} kg'
-        text7 = "RADIUS: " + f'{planets[focus].getSize()/1000:.2e} km'
-        textSurface5 = font.render(text5, True, (0, 255, 255))
-        textSurface6 = font.render(text6, True, (0, 255, 255))
-        textSurface7 = font.render(text7, True, (0, 255, 255))
-        screen.blit(menuSurface2, (1620, 0))
-        screen.blit(textSurface5, (1640, 20))
-        screen.blit(textSurface6, (1640, 40))
-        screen.blit(textSurface7, (1640, 60))
+        pygame.draw.rect(menuSurface2, 'black', (0, 0, 300, 125))
+        ## Display info on current planet as requested by client
+        if not comFocus:
+            text5 = "PLANET: " + f'{planets[focus].getName()}'
+            text6 = "MASS: " + f'{planets[focus].getMass():.2e} kg'
+            text7 = "RADIUS: " + f'{planets[focus].getSize()/1000:.2e} km'
+            textSurface5 = font.render(text5, True, (0, 255, 255))
+            textSurface6 = font.render(text6, True, (0, 255, 255))
+            textSurface7 = font.render(text7, True, (0, 255, 255))
+            screen.blit(menuSurface2, (1620, 0))
+            screen.blit(textSurface5, (1640, 20))
+            screen.blit(textSurface6, (1640, 40))
+            screen.blit(textSurface7, (1640, 60))
 
     pygame.display.flip()
     clock.tick(framerate)

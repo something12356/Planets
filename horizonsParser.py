@@ -38,6 +38,7 @@ def extractValue(text, expectingScale=False, conversionFactor=1):
                     value = float(text[i:i+j])
                     break
             break
+
     return scale*value*conversionFactor
 
 def getEphemeris(target, useGM=False, ignoreMassSize=False, mass=0, size=0):
@@ -66,7 +67,7 @@ def getEphemeris(target, useGM=False, ignoreMassSize=False, mass=0, size=0):
         if not ignoreMassSize:
             if not useGM:
                 ## Mass is in kg, so no multiplying by a factor of 10 is needed
-                if response.text[i:i+6].lower() == 'mass x' or response.text[i:i+6].lower() == 'mass, ':
+                if response.text[i:i+6].lower() == 'mass x' or response.text[i:i+7].lower() == 'mass, 1' or response.text[i:i+7].lower() == 'mass, x':
                     mass = extractValue(response.text[i:i+50],True)
 
             ## For some bodies only G*mass, rather than the mass, is given, due to quirks in how we calculate the mass of big things
@@ -96,7 +97,7 @@ def getEphemeris(target, useGM=False, ignoreMassSize=False, mass=0, size=0):
 
 ## Testing to see if the parser works before implementing it in main program
 def main():
-    print(getEphemeris(502, True))
+    print(getEphemeris(301, True))
 
 if __name__ == "__main__":
     main()
