@@ -1,7 +1,5 @@
 import math as maths
 import pygame
-import pygame_menu
-from pygame_menu import themes
 import numpy as np
 import vectors as vec
 import horizonsParser
@@ -21,7 +19,7 @@ y = 1
 G = 6.6743015*10**-11
 
 ## How long to draw the lines representing the planets' orbits.
-MAX_LINES = 200
+MAX_LINES = 300
 
 ## Switching from one zoom to another instantly is very jarring. 
 ## This uses interpolation to smoothly transition between zooms.
@@ -68,13 +66,13 @@ def displayLines(planets, adjustment, focus, comFocus, surface):
         index = -1
         orbitalPath = p.getRecords()
         for i in range(len(orbitalPath)-1):
-            line = [orbitalPath[i],orbitalPath[i+1]]
+            line = [scaledPos(orbitalPath[i])[:2]+adjustment,scaledPos(orbitalPath[i+1])[:2]+adjustment]
             # print(line[0])
             # print(adjustment)
             # print('---')
             index += 1
             ## Don't draw lines offscreen to avoid lag
-            if offscreen(scaledPos(line[0])[:2]+adjustment) and offscreen(scaledPos(line[1])[:2]+adjustment):
+            if offscreen(line[0]) and offscreen(line[1]):
                 continue
             ## A satellite's lines should not be drawn if its host or itself is not selected
             ## It is unlikely to be visible and will cause lag if drawn
@@ -83,7 +81,7 @@ def displayLines(planets, adjustment, focus, comFocus, surface):
             ## Index ratio is used to reduce opacity and thickness of the older lines 
             ## An index counter is used as python cannot find the index of np arrays with multiple elements
             indexRatio = index/len(orbitalPath)
-            pygame.draw.aaline(surface,([int(indexRatio*p.getColour()[i]) for i in range(3)]),scaledPos(line[0])[:2]+adjustment,scaledPos(line[1])[:2]+adjustment,int(indexRatio*255))
+            pygame.draw.aaline(surface,([int(indexRatio*p.getColour()[i]) for i in range(3)]),line[0],line[1],int(indexRatio*255))
         
 def drawPlanet(p, position, surface):
     ## If the planet would fill the whole screen, there's no point trying to draw
@@ -231,14 +229,14 @@ class celestialBody:
     def getRecords(self):
         return self.__records
 
+    def getArrows(self):
+        return self.__arrows
+
     def addRecord(self, record):
         self.__records.append(record)
         ## Gets rid of excess lines, prevents them from becoming too long and lagging the system
         if len(self.__records) > LINE_LENGTH:
             self.__records = self.__records[len(self.__records)-LINE_LENGTH:]
-
-    def getArrows(self):
-        return self.__arrows
     
     def addArrow(self, arrow):
         self.__arrows.append(arrow)
@@ -467,7 +465,7 @@ while running:
         pygame.draw.rect(menuSurface2, 'black', (0, 0, 300, 125))
         ## Display info on current planet as requested by client
         if not comFocus:
-            text5 = "PLANET: " + f'{planets[focus].getName()}'
+            text5 = "OBJECT: " + f'{planets[focus].getName()}'
             text6 = "MASS: " + f'{planets[focus].getMass():.2e} kg'
             text7 = "RADIUS: " + f'{planets[focus].getSize()/1000:.2e} km'
             textSurface5 = font.render(text5, True, (0, 255, 255))
