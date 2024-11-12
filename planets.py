@@ -314,8 +314,8 @@ class satellite(celestialBody):
     ## Subtracting this from the line for our satellite "removes" the movement of the host.
     ## This leaves only the movement of the satellite around the host.
     def addRecord(self, record):
-        hostRecord = self.getHost().getRecords()[-1]
-        record = record - hostRecord
+        hostPos = self.getHost().getPos()
+        record = record - hostPos
         self.__records.append(record)
         if len(self.__records) > LINE_LENGTH:
             self.__records = self.__records[len(self.__records)-LINE_LENGTH:]
