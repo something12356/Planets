@@ -242,8 +242,8 @@ class celestialBody:
         self.__arrows.append(arrow)
         ## There should never be more than the amount of planets + 1 arrows at a time,
         ## if there are, then some have been left over from previous ticks, and should be cleaned up
-        if len(self.__arrows) > len(planets)+1:
-            self.__arrows = self.__arrows[len(self.__arrows)-len(planets)-1:]
+        if len(self.__arrows) > len(planets):
+            self.__arrows = self.__arrows[len(self.__arrows)-len(planets):]
 
     ## Adds a force to the resultant force on the planet
     def addForce(self, force):
