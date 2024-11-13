@@ -67,9 +67,6 @@ def displayLines(planets, adjustment, focus, comFocus, surface):
         orbitalPath = p.getRecords()
         lines = [[scaledPos(orbitalPath[i])[:2]+adjustment, scaledPos(orbitalPath[i+1])[:2]+adjustment] for i in range(len(orbitalPath)-1)]
         for line in lines:
-            # print(line[0])
-            # print(adjustment)
-            # print('---')
             index += 1
             ## Don't draw lines offscreen to avoid lag
             if offscreen(line[0]) and offscreen(line[1]):
@@ -141,7 +138,6 @@ def simulateTick(planets, focus, timeScale):
                 p2.addArrow(["white", -1*np.copy(p1gravity)])
         if planets.index(p1) == focus:
             p1.addArrow([p1.getColour(), np.copy(p1.getResultant())])
-            # arrowsToDraw.append(np.copy(p1.getResultant()))
 
         p1.secondLaw()
         ## Uses verlet integration to update velocity and acceleration of planet
@@ -307,7 +303,8 @@ class satellite(celestialBody):
 
     ## Adds the host's postion to the line so that it can be displayed, then returns that
     def getRecords(self):
-        updatedRecords = [i+self.getHost().getPos() for i in self.__records]
+        hostPos = self.getHost().getPos()
+        updatedRecords = [i+hostPos for i in self.__records]
         return updatedRecords
 
     ## hostLine is the line drawn for the host on the current tick.
