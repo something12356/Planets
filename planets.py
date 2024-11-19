@@ -449,12 +449,15 @@ while running:
                     G -= 0.5*10**maths.floor((maths.log(abs(G), 10)))
             elif event.key == pygame.K_e:
                 if changingAttributes:
+                    oldMass = planets[focus].getMass()
                     if not comFocus:
                         planets[focus].addMass(0.5*10**maths.floor(maths.log(abs(planets[focus].getMass())+1,10)))
+                        
             elif event.key == pygame.K_d:
                 if changingAttributes:
                     if not comFocus:
                         planets[focus].addMass(-0.5*10**maths.floor(maths.log(abs(planets[focus].getMass())+1,10)))
+                        
             
         if event.type == pygame.MOUSEWHEEL:
             if event.y == 1:
@@ -533,13 +536,16 @@ while running:
             text5 = "OBJECT: " + f'{planets[focus].getName()}'
             text6 = "MASS: " + f'{planets[focus].getMass():.2e} kg'
             text7 = "RADIUS: " + f'{planets[focus].getSize()/1000:.2e} km'
+            text8 = "DISTANCE FROM SUN: " + f'{vec.mag(planets[focus].getPos()-planets[0].getPos())/1000:.2e} km'
             textSurface5 = font.render(text5, True, (0, 255, 255))
             textSurface6 = font.render(text6, True, (0, 255, 255))
             textSurface7 = font.render(text7, True, (0, 255, 255))
+            textSurface8 = font.render(text8, True, (0, 255, 255))
             screen.blit(menuSurface2, (1620, 00))
             screen.blit(textSurface5, (1640, 10))
             screen.blit(textSurface6, (1640, 30))
             screen.blit(textSurface7, (1640, 50))
+            screen.blit(textSurface8, (1640, 70))
 
     pygame.display.flip()
     clock.tick(framerate)
