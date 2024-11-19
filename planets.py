@@ -364,6 +364,7 @@ planetsToCompare = [3, 4]
 comparisonSurface1 = pygame.Surface((957, 1080))
 comparisonSurface2 = pygame.Surface((957, 1080))
 font = pygame.font.SysFont('codenewroman', 18)
+bigFont = pygame.font.SysFont('codenewroman', 32)
 menuSurface1 = pygame.Surface((400, 200), pygame.SRCALPHA)
 menuSurface2 = pygame.Surface((400, 200), pygame.SRCALPHA)
 menuSurface1.set_alpha(128)
@@ -386,12 +387,12 @@ while not started:
     text4 = "Press 'C' to enter comparison mode to compare sizes of planets"
     text5 = "Press 'A' to edit the strength of gravity (G) and the mass of planets"
     text6 = "Press Enter to start the program!"
-    startScreenSurface1 = font.render(text1, True, (0, 255, 255))
-    startScreenSurface2 = font.render(text2, True, (0, 255, 255))
-    startScreenSurface3 = font.render(text3, True, (0, 255, 255))
-    startScreenSurface4 = font.render(text4, True, (0, 255, 255))
-    startScreenSurface5 = font.render(text5, True, (0, 255, 255))
-    startScreenSurface6 = font.render(text6, True, (255, 0, 0))
+    startScreenSurface1 = bigFont.render(text1, True, (0, 255, 255))
+    startScreenSurface2 = bigFont.render(text2, True, (0, 255, 255))
+    startScreenSurface3 = bigFont.render(text3, True, (0, 255, 255))
+    startScreenSurface4 = bigFont.render(text4, True, (0, 255, 255))
+    startScreenSurface5 = bigFont.render(text5, True, (0, 255, 255))
+    startScreenSurface6 = bigFont.render(text6, True, (255, 0, 0))
 
     screen.blit(startScreenSurface1, (600, 200))
     screen.blit(startScreenSurface2, (600, 336))
