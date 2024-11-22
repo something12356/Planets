@@ -508,14 +508,14 @@ while running:
             text3 = "PRESS 'S' TO DECREASE VALUE OF G"
             text4 = "PRESS 'E' TO INCREASE PLANET'S MASS"
             text5 = "PRESS 'D' TO DECREASE PLANET'S MASS"
-            text6 = "G: " + f'{G}'
+            text6 = "G: " + f'{G} Nm²/kg²'
         else:
             text1 = "PRESS 'A' TO EDIT G & PLANET MASS"
             text2 = "GPE: " + f'{properties[0]:.2e} J'
             text3 = "KE: " + f'{properties[1]:.2e} J'
             text4 = "TOTAL ENERGY: " + f'{properties[0]+properties[1]:.2e} J'
             text5 = "TOTAL MOMENTUM: " + f'{vec.mag(properties[2]):.2e} Ns'
-            text6 = "G: " + f'{G}'
+            text6 = "G: " + f'{G} Nm²/kg²'
         textSurface1 = font.render(text1, True, (0, 255, 255))
         textSurface2 = font.render(text2, True, (0, 255, 255))
         textSurface3 = font.render(text3, True, (0, 255, 255))
