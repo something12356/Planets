@@ -382,7 +382,7 @@ while not started:
                 started = True
 
     text1 = "Press the left and right arrow keys to switch between planets"
-    text2 = "Press press the up and down arrow keys to speed up and slow down time"
+    text2 = "Press the up and down arrow keys to speed up and slow down time"
     text3 = "Press the space key to switch the focus to the centre of mass of the solar system"
     text4 = "Press 'C' to enter comparison mode to compare sizes of planets"
     text5 = "Press 'A' to edit the strength of gravity (G) and the mass of planets"
