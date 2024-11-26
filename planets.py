@@ -8,7 +8,7 @@ framerate = 120
 ## Time-scale, how much vel and position should change per tick
 ## Lower value = slower but more accurate simulation
 YEAR = 31536000/framerate
-timeScale = 0.1*YEAR
+timeScale = 0.05*YEAR
 ## The distance constant is used to translate SI units (metres) into pixels.
 ## 2 * 10**-12 means that the earth is about 30 pixels from the sun, for reference.
 distScale = 4 * 10**-9
@@ -320,8 +320,9 @@ planets = []
 
 planetNames = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
 planetColours = [(255, 255, 0), (65, 68, 74), (139, 115, 85), (0, 0, 255), (255, 99, 47), (250, 164, 87), (195, 146, 79), (98, 174, 230), (67, 109, 252), (204, 168, 132)]
-## I do not want to add all 100+ moons of Jupiter, Saturn, Uranus and Neptune, hence only the important one, our moon, is added
-moonColour = (111, 109, 114)
+## I do not want to add all 100+ moons of Jupiter, Saturn, Uranus and Neptune, hence only the important ones, our moon and the Galilean moons, are added
+moonNames = ["Moon", "Io", "Europa", "Ganymede", "Callisto"]
+moonColours = [(111, 109, 114), (253, 245, 144), (68, 169, 241), (92, 88, 76), (70, 103, 97)]
 ephemeris = horizonsParser.getEphemeris(10) ## Adding the sun
 planets.append(planet(planetNames[0], ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[0]))
 for i in range(1, 10):
@@ -329,22 +330,29 @@ for i in range(1, 10):
     ## This is adding the moon, it makes sense for it to be just after earth in the planet order
     if i == 4:
         moonEphemeris = horizonsParser.getEphemeris(301)
-        planets.append(satellite("Moon", moonEphemeris[0], moonEphemeris[1], moonEphemeris[2], moonEphemeris[3], moonColour, planets[3]))
+        planets.append(satellite(moonNames[0], moonEphemeris[0], moonEphemeris[1], moonEphemeris[2], moonEphemeris[3], moonColours[0], planets[3]))
     ## For some reason, Jupiter's mass is given in grams by NASA
     ## Despite all other masses being given in kilograms
     ## I do not know why
-    ## This resolves that problem
+    ## Dividing ephemeris[1] by 1000 resolves that problem
+    ## Here we also add the planets Europa, Io, Ganymede and Callisto (this is done at i=6 so that they are AFTER jupiter in the list)
+    ## Their IDs follow the pattern 501, 502, 503 etc so 500+j is used to generate them
     if i == 5:
         ephemeris[1] = ephemeris[1]/1000
+    if i == 6:
+        for j in range(1,5):
+            moonEphemeris = horizonsParser.getEphemeris(500+j, True)
+            planets.append(satellite(moonNames[j], moonEphemeris[0], moonEphemeris[1], moonEphemeris[2], moonEphemeris[3], moonColours[j], planets[6]))
+
     planets.append(planet(planetNames[i], ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[i]))
 # Adding a few prominent satellites (voyager 1&2)
 ephemeris=horizonsParser.getEphemeris(-31, False, True, 722, 13) # Voyager 1, need to manually input mass and size as NASA does not provide it
-planets.append(planet("Voyager 1", ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColour)) ## moonColour is grey, spacecraft are grey, close enough
+planets.append(planet("Voyager 1", ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColours[0])) ## moonColours[0] is grey, spacecraft are grey, close enough
 ephemeris=horizonsParser.getEphemeris(-32, False, True, 722, 13) # Voyager 2
-planets.append(planet("Voyager 2", ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColour))
+planets.append(planet("Voyager 2", ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColours[0]))
 
-## The -3 here is because of the moon, voyager 1 and 2, which are not usually visible and so will not cause extra lag from their orbital paths
-LINE_LENGTH = int(MAX_LINES / (len(planets)-3))
+## The -3 here is because of the moons, voyager 1 and 2, which are not usually visible and so will not cause extra lag from their orbital paths
+LINE_LENGTH = int(MAX_LINES / (len(planets)-7))
 pygame.init()
 screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
 ## Centre of screen
@@ -420,7 +428,10 @@ while running:
                 else:
                     focus = (focus-1)%len(planets)
             elif event.key == pygame.K_UP:
-                timeScale += 0.1*YEAR
+                if timeScale == 0:
+                    timeScale = 0.05*YEAR
+                else:
+                    timeScale += 0.1*YEAR
             elif event.key == pygame.K_DOWN:
                 timeScale -= 0.1*YEAR
                 ## Don't want negative time

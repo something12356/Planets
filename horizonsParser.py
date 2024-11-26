@@ -73,8 +73,7 @@ def getEphemeris(target, useGM=False, ignoreMassSize=False, mass=0, size=0):
             ## For some bodies only G*mass, rather than the mass, is given, due to quirks in how we calculate the mass of big things
             ## in this case I have to work out the mass myself from the GM value given.
             ## NASA is not standard AT ALL about how they label the GM value in their ephemeris so I have to have a lot of or statements here
-            ## While I do not need this feature at all because I don't include any moons apart from our own,
-            ## for users of my program that want to include for example Jupiter's moons, this feature will let them do that.
+            ## This is needed for Jupiter's moons
             else:
                 if response.text[i:i+6].lower() == 'gm, km' or response.text[i:i+6].lower() == 'gm   (' or response.text[i:i+6].lower() == 'gm (km':
                     mass = extractValue(response.text[i+20:i+50], False, 1/(6.6743015*10**-20))
