@@ -19,7 +19,7 @@ y = 1
 G = 6.6743015*10**-11
 
 ## How long to draw the lines representing the planets' orbits.
-MAX_LINES = 300
+MAX_LINES = 3000
 
 ## Switching from one zoom to another instantly is very jarring. 
 ## This uses interpolation to smoothly transition between zooms.
@@ -34,10 +34,8 @@ def zoom(distScale, zoomScale):
 ## Takes in a position vector and outputs that vector from the centre of mass scaled by the distance constant.
 ## This way if a planet is 150 million km from the sun, it can be displayed as x amount of pixels from the sun.
 def scaledPos(position):
-    global planets
     global distScale
-    comVector = position - com(planets)
-    return com(planets) + distScale * comVector
+    return distScale * position
 
 ## Draws an arrow by drawing a line, picking two points either side of that line, and drawing lines from the end of the first line to those two points
 def drawArrow(surface, colour, startPos, endPos):
@@ -53,7 +51,7 @@ def drawArrow(surface, colour, startPos, endPos):
     pygame.draw.aaline(surface, colour, p1, endPos[:2])
     pygame.draw.aaline(surface, colour, p2, endPos[:2])
 
-def displayArrows(planets, adjustment, surface, focus, comFocus):
+def displayArrows(planets, adjustment, focus, comFocus, surface):
     ## If no planet is being focused on then there's no arrows to draw
     if comFocus:
         return
@@ -64,8 +62,8 @@ def displayArrows(planets, adjustment, surface, focus, comFocus):
 def displayLines(planets, adjustment, focus, comFocus, surface):
     for p in planets:
         index = -1
-        orbitalPath = p.getRecords()
-        lines = [[scaledPos(orbitalPath[i])[:2]+adjustment, scaledPos(orbitalPath[i+1])[:2]+adjustment] for i in range(len(orbitalPath)-1)]
+        orbitalPath = scaledPos(np.array(p.getRecords()))
+        lines = [[(orbitalPath[i])[:2]+adjustment, (orbitalPath[i+1])[:2]+adjustment] for i in range(len(orbitalPath)-1)]
         for line in lines:
             index += 1
             ## Don't draw lines offscreen to avoid lag
@@ -486,10 +484,11 @@ while running:
         for i in range(-3,4):
             pygame.draw.aaline(screen, "blue", [960+i,0], [960+i,1080])
     else:
-        displayPlanets(planets, focusAdjustment(planets, focus, comFocus), screen)
-        displayLines(planets, focusAdjustment(planets, focus, comFocus), focus, comFocus, screen)
+        adjustment = focusAdjustment(planets, focus, comFocus)
+        displayPlanets(planets, adjustment, screen)
+        displayLines(planets, adjustment, focus, comFocus, screen)
         if arrows:
-            displayArrows(planets, focusAdjustment(planets, focus, comFocus), screen, focus, comFocus)
+            displayArrows(planets, adjustment, focus, comFocus, screen)
 
         ## Properties includes the key physical attributes of the system, potential energy, kinetic energy, momenteum
         properties = sumPhysicalProperties(planets)
