@@ -370,7 +370,7 @@ planetsToCompare = [3, 4]
 comparisonSurface1 = pygame.Surface((957, 1080))
 comparisonSurface2 = pygame.Surface((957, 1080))
 font = pygame.font.SysFont('codenewroman', 18)
-bigFont = pygame.font.SysFont('codenewroman', 32)
+bigFont = pygame.font.SysFont('codenewroman', 22)
 menuSurface1 = pygame.Surface((400, 200), pygame.SRCALPHA)
 menuSurface2 = pygame.Surface((400, 200), pygame.SRCALPHA)
 menuSurface1.set_alpha(128)
