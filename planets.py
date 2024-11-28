@@ -39,27 +39,26 @@ def scaledPos(position):
 
 ## Draws an arrow by drawing a line, picking two points either side of that line, and drawing lines from the end of the first line to those two points
 def drawArrow(surface, colour, startPos, endPos):
-    startPos, endPos = startPos[:2], endPos[:2]
-    vector = (endPos - startPos)
-    length = vec.mag(vector)
     ## My solar system is in 3d space, but pygame can only handle 2d lines.
     ## The [:2] is necessary to deal with that.
+    startPos, endPos = startPos[:2], endPos[:2]
+    mainVector = (endPos - startPos)
+    length = vec.mag(mainVector)
     pygame.draw.aaline(surface, colour, startPos, endPos)
     ## Generating the two points either side of the line
-    norm = vec.normal(vector)
-    point1 = startPos + 0.8*vector + 0.15*length*norm
-    point2 = startPos + 0.8*vector - 0.15*length*norm
+    normal = vec.normal(mainVector)
+    point1 = startPos + 0.9*mainVector + 0.05*length*normal
+    point2 = startPos + 0.9*mainVector - 0.05*length*normal
     pygame.draw.aaline(surface, colour, point1, endPos)
     pygame.draw.aaline(surface, colour, point2, endPos)
 
 def displayArrows(planets, adjustment, focus, comFocus, surface):
     global distScale
     ## If no planet is being focused on then there's no arrows to draw
-    if comFocus:
-        return
-    p = planets[focus]
-    for arrow in p.getArrows():
-        drawArrow(surface, arrow[0], p.getScaledPos()[:2]+adjustment, p.getScaledPos()[:2]+(10**-12)*(distScale)*2*arrow[1][:2]/(maths.log(p.getMass()))+adjustment)
+    if not comFocus:
+        p = planets[focus]
+        for arrow in p.getArrows():
+            drawArrow(surface, arrow[0], p.getScaledPos()[:2]+adjustment, p.getScaledPos()[:2]+2*10**-12*distScale*arrow[1][:2]/(maths.log(p.getMass()))+adjustment)
 
 def displayLines(planets, adjustment, focus, comFocus, surface):
     for p in planets:
