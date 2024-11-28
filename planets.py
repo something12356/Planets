@@ -39,19 +39,21 @@ def scaledPos(position):
 
 ## Draws an arrow by drawing a line, picking two points either side of that line, and drawing lines from the end of the first line to those two points
 def drawArrow(surface, colour, startPos, endPos):
-    vector = (endPos - startPos)[:2]
+    startPos, endPos = startPos[:2], endPos[:2]
+    vector = (endPos - startPos)
     length = vec.mag(vector)
     ## My solar system is in 3d space, but pygame can only handle 2d lines.
     ## The [:2] is necessary to deal with that.
-    pygame.draw.aaline(surface, colour, startPos[:2], endPos[:2])
+    pygame.draw.aaline(surface, colour, startPos, endPos)
     ## Generating the two points either side of the line
     norm = vec.normal(vector)
-    p1 = startPos[:2] + 0.8*vector[:2] + 0.15*length*norm[:2]
-    p2 = startPos[:2] + 0.8*vector[:2] - 0.15*length*norm[:2]
-    pygame.draw.aaline(surface, colour, p1, endPos[:2])
-    pygame.draw.aaline(surface, colour, p2, endPos[:2])
+    point1 = startPos + 0.8*vector + 0.15*length*norm
+    point2 = startPos + 0.8*vector - 0.15*length*norm
+    pygame.draw.aaline(surface, colour, point1, endPos)
+    pygame.draw.aaline(surface, colour, point2, endPos)
 
 def displayArrows(planets, adjustment, focus, comFocus, surface):
+    global distScale
     ## If no planet is being focused on then there's no arrows to draw
     if comFocus:
         return
@@ -63,8 +65,9 @@ def displayLines(planets, adjustment, focus, comFocus, surface):
     for p in planets:
         index = -1
         orbitalPath = [i[:2]+adjustment for i in scaledPos(np.array(p.getRecords()))]
-        lines = [[(orbitalPath[i]), (orbitalPath[i+1])] for i in range(len(orbitalPath)-1)]
-        for line in lines:
+        # lines = [[orbitalPath[i], orbitalPath[i+1]] for i in range(len(orbitalPath)-1)]
+        for i in range(len(orbitalPath)-1):
+            line = [orbitalPath[i], orbitalPath[i+1]]
             index += 1
             ## Don't draw lines offscreen to avoid lag
             if offscreen(line[0]) and offscreen(line[1]):
@@ -76,14 +79,15 @@ def displayLines(planets, adjustment, focus, comFocus, surface):
             ## Index ratio is used to reduce opacity and thickness of the older lines 
             ## An index counter is used as python cannot find the index of np arrays with multiple elements
             indexRatio = index/len(orbitalPath)
-            pygame.draw.aaline(surface,([int(indexRatio*p.getColour()[i]) for i in range(3)]),line[0],line[1],int(indexRatio*255))
+            pygame.draw.aaline(surface,([int(indexRatio*colour) for colour in p.getColour()]),line[0],line[1],True)
         
 def drawPlanet(p, position, surface):
+    global distScale
     ## If the planet would fill the whole screen, there's no point trying to draw
     ## more of the circle than necessary, just fill the screen.
     ## This avoids severe lag when zooming in very closely.
-    if p.getSize()*distScale > vec.mag(centre):
-        screen.fill(p.getColour())
+    if distScale*p.getSize() > vec.mag(centre):
+        surface.fill(p.getColour())
     else:
         pygame.draw.circle(surface,p.getColour(),position,p.getSize()*distScale)
     
@@ -98,7 +102,7 @@ def displayPlanets(planets, adjustment, surface):
             continue
         drawPlanet(p, p.getScaledPos()[:2]+adjustment, surface)
 
-## Finds the centre of mass of the sysetm
+## Finds the centre of mass of the system
 def com(planets):
     com = np.array([0.0,0.0,0.0])
     mass = 0
@@ -366,7 +370,7 @@ comFocus = False
 arrows = False
 comparison = False
 changingAttributes = False
-planetsToCompare = [3, 4]
+planetsToCompare = [0, 6]
 comparisonSurface1 = pygame.Surface((957, 1080))
 comparisonSurface2 = pygame.Surface((957, 1080))
 font = pygame.font.SysFont('codenewroman', 18)
