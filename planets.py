@@ -147,9 +147,9 @@ def simulateTick(planets, focus, timeScale):
 
 ## Takes in vector, returns False if within the screen, True otherwise
 def offscreen(vector):
-    if vector[x] > 0 and vector[x] < 1920 and vector[y] > 0 and vector[y] < 1080:
-        return False
-    return True
+    if vector[x] < 0 or vector[x] > centre[x]*2 or vector[y] < 0 or vector[y] > centre[y]*2:
+        return True
+    return False
 
 ## This is so that the program can demonstrate that momentum and energy are conserved
 def sumPhysicalProperties(planets):
