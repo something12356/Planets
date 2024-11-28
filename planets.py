@@ -62,8 +62,8 @@ def displayArrows(planets, adjustment, focus, comFocus, surface):
 def displayLines(planets, adjustment, focus, comFocus, surface):
     for p in planets:
         index = -1
-        orbitalPath = scaledPos(np.array(p.getRecords()))
-        lines = [[(orbitalPath[i])[:2]+adjustment, (orbitalPath[i+1])[:2]+adjustment] for i in range(len(orbitalPath)-1)]
+        orbitalPath = [i[:2]+adjustment for i in scaledPos(np.array(p.getRecords()))]
+        lines = [[(orbitalPath[i]), (orbitalPath[i+1])] for i in range(len(orbitalPath)-1)]
         for line in lines:
             index += 1
             ## Don't draw lines offscreen to avoid lag
