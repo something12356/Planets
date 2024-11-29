@@ -370,8 +370,8 @@ arrows = False
 comparison = False
 changingAttributes = False
 planetsToCompare = [0, 6]
-comparisonSurface1 = pygame.Surface((957, 1080))
-comparisonSurface2 = pygame.Surface((957, 1080))
+comparisonSurface1 = pygame.Surface((centre[x]-3, centre[y]*2))
+comparisonSurface2 = pygame.Surface((centre[x]-3, centre[y]*2))
 font = pygame.font.SysFont('codenewroman', 18)
 bigFont = pygame.font.SysFont('codenewroman', 22)
 menuSurface1 = pygame.Surface((400, 200), pygame.SRCALPHA)
@@ -489,14 +489,13 @@ while running:
     # focusAdjustment(planets, comFocus)
     if comparison:
         ## These rects get rid of old drawings, similar to doing screen.fill((0,0,0)) to refresh the display
-        pygame.draw.rect(comparisonSurface1, 'black', (0, 0, 1920, 1080))
-        pygame.draw.rect(comparisonSurface2, 'black', (0, 0, 1920, 1080))
-        drawPlanet(planets[planetsToCompare[0]], np.array([480, 540]), comparisonSurface1)
-        drawPlanet(planets[planetsToCompare[1]], np.array([480, 540]), comparisonSurface2)
+        pygame.draw.rect(comparisonSurface1, 'black', (0, 0, centre[x]*2, centre[y]*2))
+        pygame.draw.rect(comparisonSurface2, 'black', (0, 0, centre[x]*2, centre[y]*2))
+        drawPlanet(planets[planetsToCompare[0]], np.array([centre[x]/2, centre[y]]), comparisonSurface1)
+        drawPlanet(planets[planetsToCompare[1]], np.array([centre[x]/2, centre[y]]), comparisonSurface2)
         screen.blit(comparisonSurface1, (0, 0))
-        screen.blit(comparisonSurface2, (963, 0))
-        for i in range(-3,4):
-            pygame.draw.aaline(screen, "blue", [960+i,0], [960+i,1080])
+        screen.blit(comparisonSurface2, (centre[x]+3, 0))
+        pygame.draw.line(screen, "blue", [centre[x],0], [centre[x],centre[y]*2], 6)
     else:
         adjustment = focusAdjustment(planets, focus, comFocus)
         displayPlanets(planets, adjustment, screen)
