@@ -182,13 +182,12 @@ def displayStartScreen():
 
 ## Finds the centre of mass of the system
 def com(planets):
-    com = np.array([0.0,0.0,0.0])
-    mass = 0
+    positionMassSum = np.array([0.0,0.0,0.0])
+    massSum = 0
     for p in planets:
-        com += p.getMass()*p.getPos()
-        mass += p.getMass()
-    # print(com/mass)
-    return com/mass
+        positionMassSum += p.getMass()*p.getPos()
+        massSum += p.getMass()
+    return positionMassSum/massSum
 
 def focusAdjustment(planets, focus, comFocus):
     if comFocus:
@@ -527,7 +526,7 @@ while running:
             elif event.key == pygame.K_d:
                 if changingAttributes:
                     if not comFocus:
-                        planets[focus].addMass(-0.5*10**maths.floor(maths.log(planets[focus].getMass())+1,10))
+                        planets[focus].addMass(-0.5*10**maths.floor(maths.log(planets[focus].getMass()+1,10)))
                         
             
         if event.type == pygame.MOUSEWHEEL:
