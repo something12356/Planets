@@ -4,17 +4,15 @@ import numpy as np
 import vectors as vec
 import horizonsParser
 
-framerate = 120
-## Time-scale, how much vel and position should change per tick
-## Lower value = slower but more accurate simulation
-YEAR = 31536000/framerate
-timeScale = 0.05*YEAR
+### These are all either constants or are variables that are only ever changed by main(), and so
+### it's okay to define them here and use them globally.
 ## The distance constant is used to translate SI units (metres) into pixels.
-## 2 * 10**-12 means that the earth is about 30 pixels from the sun, for reference.
+## 4 * 10**-9 means that the earth is about 600 pixels from the sun, for reference.
 distScale = 4 * 10**-9
 zoomScale = distScale
 x = 0
 y = 1
+
 ## Gravitational constant, defines how strong gravity is. Real life G = 6.6743015*10**-11
 G = 6.6743015*10**-11
 
@@ -101,7 +99,7 @@ def displayPlanets(planets, adjustment, surface):
             continue
         drawPlanet(p, p.getScaledPos()[:2]+adjustment, surface)
 
-def displayAttributeInfo(changingAttributes, properties, horizontalPos, surface):
+def displayAttributeInfo(font, changingAttributes, properties, horizontalPos, surface):
     ## This is absolutely horrible code but it was the best way I could figure out of doing it
 
     ## The reason I have multiple textSurfaces is because pygame does not seem to support the "\n" character,
@@ -136,7 +134,7 @@ def displayAttributeInfo(changingAttributes, properties, horizontalPos, surface)
     screen.blit(textSurface6, (horizontalPos, 110))
 
 ## This displays information on the desired planet.
-def displayPlanetInfo(targetPlanet, planets, horizontalPos, surface):
+def displayPlanetInfo(font, targetPlanet, planets, horizontalPos, surface):
     pygame.draw.rect(surface, 'black', (0, 0, 350, 125))
     text5 = "OBJECT: " + f'{targetPlanet.getName()}'
     text6 = "MASS: " + f'{targetPlanet.getMass():.2e} kg'
@@ -152,7 +150,7 @@ def displayPlanetInfo(targetPlanet, planets, horizontalPos, surface):
     screen.blit(textSurface7, (horizontalPos, 50))
     screen.blit(textSurface8, (horizontalPos, 70))
 
-def displayStartScreen():
+def displayStartScreen(font):
     text1 = "Press the left and right arrow keys to switch between planets"
     text2 = "Press the up and down arrow keys to speed up and slow down time"
     text3 = "Press the space key to switch the focus to the centre of mass of the solar system"
@@ -160,13 +158,13 @@ def displayStartScreen():
     text5 = "Press 'C' to enter comparison mode to compare sizes of planets"
     text6 = "Press 'A' to edit the strength of gravity (G) and the mass of planets"
     text7 = "Press Enter to start the program!"
-    startScreenSurface1 = bigFont.render(text1, True, (0, 255, 255))
-    startScreenSurface2 = bigFont.render(text2, True, (0, 255, 255))
-    startScreenSurface3 = bigFont.render(text3, True, (0, 255, 255))
-    startScreenSurface4 = bigFont.render(text4, True, (0, 255, 255))
-    startScreenSurface5 = bigFont.render(text5, True, (0, 255, 255))
-    startScreenSurface6 = bigFont.render(text6, True, (0, 255, 255))
-    startScreenSurface7 = bigFont.render(text7, True, (255, 0, 0))
+    startScreenSurface1 = font.render(text1, True, (0, 255, 255))
+    startScreenSurface2 = font.render(text2, True, (0, 255, 255))
+    startScreenSurface3 = font.render(text3, True, (0, 255, 255))
+    startScreenSurface4 = font.render(text4, True, (0, 255, 255))
+    startScreenSurface5 = font.render(text5, True, (0, 255, 255))
+    startScreenSurface6 = font.render(text6, True, (0, 255, 255))
+    startScreenSurface7 = font.render(text7, True, (255, 0, 0))
 
     ## Display the start messages at equally spaced intervals down the screen.
     screen.blit(startScreenSurface1, (500, 1/7 * 0.9*centre[y]*2))
@@ -178,7 +176,6 @@ def displayStartScreen():
     screen.blit(startScreenSurface7, (500, 7/7 * 0.9*centre[y]*2))
 
     pygame.display.flip()
-    clock.tick(framerate)
 
 ## Finds the centre of mass of the system
 def com(planets):
@@ -396,182 +393,199 @@ class satellite(celestialBody):
         if len(self.__records) > LINE_LENGTH:
             self.__records = self.__records[len(self.__records)-LINE_LENGTH:]
 
-## This list contains the name, NASA ID and colour of all the planets
-planets = []
+def generateSolarSystem():
+    ## This list contains the name, NASA ID and colour of all the planets
+    planets = []
 
-planetNames = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
-planetColours = [(255, 255, 0), (65, 68, 74), (139, 115, 85), (0, 0, 255), (255, 99, 47), (250, 164, 87), (195, 146, 79), (98, 174, 230), (67, 109, 252), (204, 168, 132)]
-## I do not want to add all 100+ moons of Jupiter, Saturn, Uranus and Neptune, hence only the important ones, our moon and the Galilean moons, are added
-moonNames = ["Moon", "Io", "Europa", "Ganymede", "Callisto"]
-moonColours = [(111, 109, 114), (253, 245, 144), (68, 169, 241), (92, 88, 76), (70, 103, 97)]
-ephemeris = horizonsParser.getEphemeris(10) ## Adding the sun
-planets.append(planet(planetNames[0], ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[0]))
-for i in range(1, 10):
-    ephemeris = horizonsParser.getEphemeris(i*100+99)
-    ## This is adding the moon, it makes sense for it to be just after earth in the planet order
-    if i == 4:
-        moonEphemeris = horizonsParser.getEphemeris(301)
-        planets.append(satellite(moonNames[0], moonEphemeris[0], moonEphemeris[1], moonEphemeris[2], moonEphemeris[3], moonColours[0], planets[3]))
-    ## For some reason, Jupiter's mass is given in grams by NASA
-    ## Despite all other masses being given in kilograms
-    ## I do not know why
-    ## Dividing ephemeris[1] by 1000 resolves that problem
-    ## Here we also add the planets Europa, Io, Ganymede and Callisto (this is done at i=6 so that they are AFTER jupiter in the list)
-    ## Their IDs follow the pattern 501, 502, 503 etc so 500+j is used to generate them
-    if i == 5:
-        ephemeris[1] = ephemeris[1]/1000
-    if i == 6:
-        for j in range(1,5):
-            moonEphemeris = horizonsParser.getEphemeris(500+j, True)
-            planets.append(satellite(moonNames[j], moonEphemeris[0], moonEphemeris[1], moonEphemeris[2], moonEphemeris[3], moonColours[j], planets[6]))
+    planetNames = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"]
+    planetColours = [(255, 255, 0), (65, 68, 74), (139, 115, 85), (0, 0, 255), (255, 99, 47), (250, 164, 87), (195, 146, 79), (98, 174, 230), (67, 109, 252), (204, 168, 132)]
+    ## I do not want to add all 100+ moons of Jupiter, Saturn, Uranus and Neptune, hence only the important ones, our moon and the Galilean moons, are added
+    moonNames = ["Moon", "Io", "Europa", "Ganymede", "Callisto"]
+    moonColours = [(111, 109, 114), (253, 245, 144), (68, 169, 241), (92, 88, 76), (70, 103, 97)]
+    ephemeris = horizonsParser.getEphemeris(10) ## Adding the sun
+    planets.append(planet(planetNames[0], ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[0]))
+    for i in range(1, 10):
+        ephemeris = horizonsParser.getEphemeris(i*100+99)
+        ## This is adding the moon, it makes sense for it to be just after earth in the planet order
+        if i == 4:
+            moonEphemeris = horizonsParser.getEphemeris(301)
+            planets.append(satellite(moonNames[0], moonEphemeris[0], moonEphemeris[1], moonEphemeris[2], moonEphemeris[3], moonColours[0], planets[3]))
+        ## For some reason, Jupiter's mass is given in grams by NASA
+        ## Despite all other masses being given in kilograms
+        ## I do not know why
+        ## Dividing ephemeris[1] by 1000 resolves that problem
+        ## Here we also add the planets Europa, Io, Ganymede and Callisto (this is done at i=6 so that they are AFTER jupiter in the list)
+        ## Their IDs follow the pattern 501, 502, 503 etc so 500+j is used to generate them
+        if i == 5:
+            ephemeris[1] = ephemeris[1]/1000
+        if i == 6:
+            for j in range(1,5):
+                moonEphemeris = horizonsParser.getEphemeris(500+j, True)
+                planets.append(satellite(moonNames[j], moonEphemeris[0], moonEphemeris[1], moonEphemeris[2], moonEphemeris[3], moonColours[j], planets[6]))
 
-    planets.append(planet(planetNames[i], ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[i]))
-# Adding a few prominent satellites (voyager 1&2)
-ephemeris=horizonsParser.getEphemeris(-31, False, True, 722, 13) # Voyager 1, need to manually input mass and size as NASA does not provide it
-planets.append(planet("Voyager 1", ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColours[0])) ## moonColours[0] is grey, spacecraft are grey, close enough
-ephemeris=horizonsParser.getEphemeris(-32, False, True, 722, 13) # Voyager 2
-planets.append(planet("Voyager 2", ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColours[0]))
+        planets.append(planet(planetNames[i], ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[i]))
+    # Adding a few prominent satellites (voyager 1&2)
+    ephemeris=horizonsParser.getEphemeris(-31, False, True, 722, 13) # Voyager 1, need to manually input mass and size as NASA does not provide it
+    planets.append(planet("Voyager 1", ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColours[0])) ## moonColours[0] is grey, spacecraft are grey, close enough
+    ephemeris=horizonsParser.getEphemeris(-32, False, True, 722, 13) # Voyager 2
+    planets.append(planet("Voyager 2", ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], moonColours[0]))
+    return planets
+
+planets = generateSolarSystem()
 
 ## The -3 here is because of the moons, voyager 1 and 2, which are not usually visible and so will not cause extra lag from their orbital paths
 LINE_LENGTH = int(MAX_LINES / (len(planets)-7))
 pygame.init()
 screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
-## Centre of screen
+## Centre is never edited and is needed by lots of functions so makes sense to have it as global
 centre = np.array(pygame.display.get_surface().get_size())/2
-clock = pygame.time.Clock()
-started = False
-running = True
-arrowsToDraw = []
-focus = 0
-comFocus = False
-arrows = False
-comparison = False
-changingAttributes = False
-planetsToCompare = [0, 6]
-comparisonSurface1 = pygame.Surface((centre[x]-3, centre[y]*2))
-comparisonSurface2 = pygame.Surface((centre[x]-3, centre[y]*2))
-font = pygame.font.SysFont('codenewroman', 18)
-bigFont = pygame.font.SysFont('codenewroman', 22)
-## Menu surface 1 is for displaying the energies
-menuSurface1 = pygame.Surface((400, 200), pygame.SRCALPHA)
-## Menu surface 2 is for displaying planet info
-menuSurface2 = pygame.Surface((400, 200), pygame.SRCALPHA)
-menuSurface1.set_alpha(128)
-menuSurface2.set_alpha(128)
 
-## Display a start screen that also explains all the keybinds
-while not started:
-    screen.fill((0,0,0))
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+def main():
+    global distScale
+    global zoomScale
+    global G
+    framerate = 120
+    ## Time-scale, how much vel and position should change per tick
+    ## Lower value = slower but more accurate simulation
+    year = 31536000/framerate
+    timeScale = 0.05*year
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RETURN:
-                started = True
+    ## Centre of screen
+    clock = pygame.time.Clock()
+    started = False
+    running = True
+    arrowsToDraw = []
+    focus = 0
+    comFocus = False
+    arrows = False
+    comparison = False
+    changingAttributes = False
+    planetsToCompare = [0, 6]
+    comparisonSurface1 = pygame.Surface((centre[x]-3, centre[y]*2))
+    comparisonSurface2 = pygame.Surface((centre[x]-3, centre[y]*2))
+    font = pygame.font.SysFont('codenewroman', 18)
+    bigFont = pygame.font.SysFont('codenewroman', 22)
+    ## Menu surface 1 is for displaying the energies
+    menuSurface1 = pygame.Surface((400, 200), pygame.SRCALPHA)
+    ## Menu surface 2 is for displaying planet info
+    menuSurface2 = pygame.Surface((400, 200), pygame.SRCALPHA)
+    menuSurface1.set_alpha(128)
+    menuSurface2.set_alpha(128)
+    ## Display a start screen that also explains all the keybinds
+    while not started:
+        screen.fill((0,0,0))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-    displayStartScreen()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    started = True
 
-while running:
-    screen.fill((0,0,0))
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+        displayStartScreen(bigFont)
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT:
-                if comparison:
-                    planetsToCompare[1] = (planetsToCompare[1]+1) % len(planets)
-                else:
-                    focus = (focus+1)%len(planets)
-            elif event.key == pygame.K_LEFT:
-                if comparison:
-                    planetsToCompare[0] = (planetsToCompare[0]+1) % len(planets)
-                else:
-                    focus = (focus-1)%len(planets)
-            elif event.key == pygame.K_UP:
-                if timeScale == 0:
-                    timeScale = 0.05*YEAR
-                else:
-                    timeScale += 0.1*YEAR
-            elif event.key == pygame.K_DOWN:
-                timeScale -= 0.1*YEAR
-                ## Don't want negative time
-                if timeScale < 0:
-                    timeScale = 0
-            elif event.key == pygame.K_SPACE:
-                ## Toggles whether or not the screen is centered on the centre of mass
-                comFocus = not comFocus
-            elif event.key == pygame.K_f:
-                arrows = not arrows
-            elif event.key == pygame.K_c:
-                comparison = not comparison
-            elif event.key == pygame.K_a:
-                changingAttributes = not changingAttributes
-            ## G is very small, but users might want very large values of G.
-            ## To achieve this, I make the increments G go up in scale with the order of magnitude of G.
-            ## The same thing is done with masses of planets, as a very different increment is needed
-            ## for something the size of a satellite compared to something the size of our sun
-            elif event.key == pygame.K_w:
-                if changingAttributes:
-                    G += 0.5*10**maths.floor((maths.log(G, 10)))
-            elif event.key == pygame.K_s:
-                if changingAttributes:
-                    G -= 0.5*10**maths.floor((maths.log(G, 10)))
-            elif event.key == pygame.K_e:
-                if changingAttributes:
-                    oldMass = planets[focus].getMass()
-                    if not comFocus:
-                        planets[focus].addMass(0.5*10**maths.floor(maths.log(planets[focus].getMass()+1,10)))
-            elif event.key == pygame.K_d:
-                if changingAttributes:
-                    if not comFocus:
-                        planets[focus].addMass(-0.5*10**maths.floor(maths.log(planets[focus].getMass()+1,10)))
-                        
-            
-        if event.type == pygame.MOUSEWHEEL:
-            if event.y == 1:
-                if zoomScale < distScale:
-                    zoomScale = zoomScale*0.3 + distScale*0.7
-                zoomScale += 0.4*zoomScale
-            if event.y == -1:
-                if zoomScale > distScale:
-                    zoomScale = zoomScale*0.3 + distScale*0.7
-                zoomScale -= 0.4*zoomScale
+    while running:
+        screen.fill((0,0,0))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-    ## Works out gravitational force between all planets and moves them accordingly each tick
-    simulateTick(planets, focus, timeScale)
-    distScale = zoom(distScale, zoomScale)
-    ## focusAdjustment makes it so that the screen follows whichever planet the user wants to look at
-    ## Alternatively, follows the centre of mass, useful for binary star systems
-    # focusAdjustment(planets, comFocus)
-    if comparison:
-        ## These rects get rid of old drawings, similar to doing screen.fill((0,0,0)) to refresh the display
-        pygame.draw.rect(comparisonSurface1, 'black', (0, 0, centre[x]*2, centre[y]*2))
-        pygame.draw.rect(comparisonSurface2, 'black', (0, 0, centre[x]*2, centre[y]*2))
-        drawPlanet(planets[planetsToCompare[0]], np.array([centre[x]/2, centre[y]]), comparisonSurface1)
-        drawPlanet(planets[planetsToCompare[1]], np.array([centre[x]/2, centre[y]]), comparisonSurface2)
-        screen.blit(comparisonSurface1, (0, 0))
-        screen.blit(comparisonSurface2, (centre[x]+3, 0))
-        pygame.draw.line(screen, "blue", [centre[x],0], [centre[x],centre[y]*2], 6)
-        ## Display info on both selected planets
-        displayPlanetInfo(planets[planetsToCompare[0]], planets, 20, menuSurface2)
-        displayPlanetInfo(planets[planetsToCompare[1]], planets, centre[x]*2-280, menuSurface2)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT:
+                    if comparison:
+                        planetsToCompare[1] = (planetsToCompare[1]+1) % len(planets)
+                    else:
+                        focus = (focus+1)%len(planets)
+                elif event.key == pygame.K_LEFT:
+                    if comparison:
+                        planetsToCompare[0] = (planetsToCompare[0]+1) % len(planets)
+                    else:
+                        focus = (focus-1)%len(planets)
+                elif event.key == pygame.K_UP:
+                    if timeScale == 0:
+                        timeScale = 0.05*year
+                    else:
+                        timeScale += 0.1*year
+                elif event.key == pygame.K_DOWN:
+                    timeScale -= 0.1*year
+                    ## Don't want negative time
+                    if timeScale < 0:
+                        timeScale = 0
+                elif event.key == pygame.K_SPACE:
+                    ## Toggles whether or not the screen is centered on the centre of mass
+                    comFocus = not comFocus
+                elif event.key == pygame.K_f:
+                    arrows = not arrows
+                elif event.key == pygame.K_c:
+                    comparison = not comparison
+                elif event.key == pygame.K_a:
+                    changingAttributes = not changingAttributes
+                ## G is very small, but users might want very large values of G.
+                ## To achieve this, I make the increments G go up in scale with the order of magnitude of G.
+                ## The same thing is done with masses of planets, as a very different increment is needed
+                ## for something the size of a satellite compared to something the size of our sun
+                elif event.key == pygame.K_w:
+                    if changingAttributes:
+                        G += 0.5*10**maths.floor((maths.log(G, 10)))
+                elif event.key == pygame.K_s:
+                    if changingAttributes:
+                        G -= 0.5*10**maths.floor((maths.log(G, 10)))
+                elif event.key == pygame.K_e:
+                    if changingAttributes:
+                        oldMass = planets[focus].getMass()
+                        if not comFocus:
+                            planets[focus].addMass(0.5*10**maths.floor(maths.log(planets[focus].getMass()+1,10)))
+                elif event.key == pygame.K_d:
+                    if changingAttributes:
+                        if not comFocus:
+                            planets[focus].addMass(-0.5*10**maths.floor(maths.log(planets[focus].getMass()+1,10)))
+                            
+                
+            if event.type == pygame.MOUSEWHEEL:
+                if event.y == 1:
+                    if zoomScale < distScale:
+                        zoomScale = zoomScale*0.3 + distScale*0.7
+                    zoomScale += 0.4*zoomScale
+                if event.y == -1:
+                    if zoomScale > distScale:
+                        zoomScale = zoomScale*0.3 + distScale*0.7
+                    zoomScale -= 0.4*zoomScale
 
-    else:
-        adjustment = focusAdjustment(planets, focus, comFocus)
-        displayPlanets(planets, adjustment, screen)
-        displayLines(planets, adjustment, focus, comFocus, screen)
-        if arrows:
-            displayArrows(planets, adjustment, focus, comFocus, screen)
+        ## Works out gravitational force between all planets and moves them accordingly each tick
+        simulateTick(planets, focus, timeScale)
+        distScale = zoom(distScale, zoomScale)
 
-        ## Properties includes the key physical attributes of the system, potential energy, kinetic energy, momenteum
-        properties = sumPhysicalProperties(planets)
-        ## Displaying the menu
-        displayAttributeInfo(changingAttributes, properties, 20, menuSurface1)
-        ## Display info on current planet as requested by client
-        if not comFocus:
-            displayPlanetInfo(planets[focus], planets, centre[x]*2-280, menuSurface2)
+        ## focusAdjustment makes it so that the screen follows whichever planet the user wants to look at
+        ## Alternatively, follows the centre of mass, useful for binary star systems
+        # focusAdjustment(planets, comFocus)
+        if comparison:
+            ## These rects get rid of old drawings, similar to doing screen.fill((0,0,0)) to refresh the display
+            pygame.draw.rect(comparisonSurface1, 'black', (0, 0, centre[x]*2, centre[y]*2))
+            pygame.draw.rect(comparisonSurface2, 'black', (0, 0, centre[x]*2, centre[y]*2))
+            drawPlanet(planets[planetsToCompare[0]], np.array([centre[x]/2, centre[y]]), comparisonSurface1)
+            drawPlanet(planets[planetsToCompare[1]], np.array([centre[x]/2, centre[y]]), comparisonSurface2)
+            screen.blit(comparisonSurface1, (0, 0))
+            screen.blit(comparisonSurface2, (centre[x]+3, 0))
+            pygame.draw.line(screen, "blue", [centre[x],0], [centre[x],centre[y]*2], 6)
+            ## Display info on both selected planets
+            displayPlanetInfo(font, planets[planetsToCompare[0]], planets, 20, menuSurface2)
+            displayPlanetInfo(font, planets[planetsToCompare[1]], planets, centre[x]*2-280, menuSurface2)
 
-    pygame.display.flip()
-    clock.tick(framerate)
+        else:
+            adjustment = focusAdjustment(planets, focus, comFocus)
+            displayPlanets(planets, adjustment, screen)
+            displayLines(planets, adjustment, focus, comFocus, screen)
+            if arrows:
+                displayArrows(planets, adjustment, focus, comFocus, screen)
+
+            ## Properties includes the key physical attributes of the system, potential energy, kinetic energy, momenteum
+            properties = sumPhysicalProperties(planets)
+            ## Displaying the menu
+            displayAttributeInfo(font, changingAttributes, properties, 20, menuSurface1)
+            ## Display info on current planet as requested by client
+            if not comFocus:
+                displayPlanetInfo(font, planets[focus], planets, centre[x]*2-280, menuSurface2)
+
+        pygame.display.flip()
+        clock.tick(framerate)
+main()
