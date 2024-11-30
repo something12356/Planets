@@ -137,7 +137,7 @@ def displayAttributeInfo(changingAttributes, properties, horizontalPos, surface)
 
 ## This displays information on the desired planet.
 def displayPlanetInfo(targetPlanet, planets, horizontalPos, surface):
-    pygame.draw.rect(surface, 'black', (0, 0, 300, 125))
+    pygame.draw.rect(surface, 'black', (0, 0, 350, 125))
     text5 = "OBJECT: " + f'{targetPlanet.getName()}'
     text6 = "MASS: " + f'{targetPlanet.getMass():.2e} kg'
     text7 = "RADIUS: " + f'{targetPlanet.getSize()/1000:.2e} km'
@@ -555,8 +555,8 @@ while running:
         screen.blit(comparisonSurface2, (centre[x]+3, 0))
         pygame.draw.line(screen, "blue", [centre[x],0], [centre[x],centre[y]*2], 6)
         ## Display info on both selected planets
-        displayPlanetInfo(planets[planetsToCompare[0]],planets, 20)
-        displayPlanetInfo(planets[planetsToCompare[1]], planets, centre[x]*2-280)
+        displayPlanetInfo(planets[planetsToCompare[0]], planets, 20, menuSurface2)
+        displayPlanetInfo(planets[planetsToCompare[1]], planets, centre[x]*2-280, menuSurface2)
 
     else:
         adjustment = focusAdjustment(planets, focus, comFocus)
