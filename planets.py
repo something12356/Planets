@@ -101,6 +101,85 @@ def displayPlanets(planets, adjustment, surface):
             continue
         drawPlanet(p, p.getScaledPos()[:2]+adjustment, surface)
 
+def displayAttributeInfo(changingAttributes, properties, horizontalPos, surface):
+    ## This is absolutely horrible code but it was the best way I could figure out of doing it
+
+    ## The reason I have multiple textSurfaces is because pygame does not seem to support the "\n" character,
+    ## so this is the only way I could get new lines.
+    pygame.draw.rect(surface, 'black', (0, 0, 400, 150))
+    if changingAttributes:
+        text1 = "PRESS 'A' TO STOP EDITING ATTRIBUTES"
+        text2 = "PRESS 'W' TO INCREASE VALUE OF G"
+        text3 = "PRESS 'S' TO DECREASE VALUE OF G"
+        text4 = "PRESS 'E' TO INCREASE PLANET'S MASS"
+        text5 = "PRESS 'D' TO DECREASE PLANET'S MASS"
+        text6 = "G: " + f'{G} Nm²/kg²'
+    else:
+        text1 = "PRESS 'A' TO EDIT G & PLANET MASS"
+        text2 = "GPE: " + f'{properties[0]:.2e} J'
+        text3 = "KE: " + f'{properties[1]:.2e} J'
+        text4 = "TOTAL ENERGY: " + f'{properties[0]+properties[1]:.2e} J'
+        text5 = "TOTAL MOMENTUM: " + f'{vec.mag(properties[2]):.2e} Ns'
+        text6 = "G: " + f'{G} Nm²/kg²'
+    textSurface1 = font.render(text1, True, (0, 255, 255))
+    textSurface2 = font.render(text2, True, (0, 255, 255))
+    textSurface3 = font.render(text3, True, (0, 255, 255))
+    textSurface4 = font.render(text4, True, (0, 255, 255))
+    textSurface5 = font.render(text5, True, (0, 255, 255))
+    textSurface6 = font.render(text6, True, (0, 255, 255))
+    screen.blit(surface, (horizontalPos-20, 0))
+    screen.blit(textSurface1, (horizontalPos, 10))
+    screen.blit(textSurface2, (horizontalPos, 30))
+    screen.blit(textSurface3, (horizontalPos, 50))
+    screen.blit(textSurface4, (horizontalPos, 70))
+    screen.blit(textSurface5, (horizontalPos, 90))
+    screen.blit(textSurface6, (horizontalPos, 110))
+
+## This displays information on the desired planet.
+def displayPlanetInfo(targetPlanet, planets, horizontalPos, surface):
+    pygame.draw.rect(surface, 'black', (0, 0, 300, 125))
+    text5 = "OBJECT: " + f'{targetPlanet.getName()}'
+    text6 = "MASS: " + f'{targetPlanet.getMass():.2e} kg'
+    text7 = "RADIUS: " + f'{targetPlanet.getSize()/1000:.2e} km'
+    text8 = "DISTANCE FROM SUN: " + f'{vec.mag(targetPlanet.getPos()-planets[0].getPos())/1000:.2e} km'
+    textSurface5 = font.render(text5, True, (0, 255, 255))
+    textSurface6 = font.render(text6, True, (0, 255, 255))
+    textSurface7 = font.render(text7, True, (0, 255, 255))
+    textSurface8 = font.render(text8, True, (0, 255, 255))
+    screen.blit(surface, (horizontalPos-20, 00))
+    screen.blit(textSurface5, (horizontalPos, 10))
+    screen.blit(textSurface6, (horizontalPos, 30))
+    screen.blit(textSurface7, (horizontalPos, 50))
+    screen.blit(textSurface8, (horizontalPos, 70))
+
+def displayStartScreen():
+    text1 = "Press the left and right arrow keys to switch between planets"
+    text2 = "Press the up and down arrow keys to speed up and slow down time"
+    text3 = "Press the space key to switch the focus to the centre of mass of the solar system"
+    text4 = "Press 'F' to show the forces acting on the selected planet"
+    text5 = "Press 'C' to enter comparison mode to compare sizes of planets"
+    text6 = "Press 'A' to edit the strength of gravity (G) and the mass of planets"
+    text7 = "Press Enter to start the program!"
+    startScreenSurface1 = bigFont.render(text1, True, (0, 255, 255))
+    startScreenSurface2 = bigFont.render(text2, True, (0, 255, 255))
+    startScreenSurface3 = bigFont.render(text3, True, (0, 255, 255))
+    startScreenSurface4 = bigFont.render(text4, True, (0, 255, 255))
+    startScreenSurface5 = bigFont.render(text5, True, (0, 255, 255))
+    startScreenSurface6 = bigFont.render(text6, True, (0, 255, 255))
+    startScreenSurface7 = bigFont.render(text7, True, (255, 0, 0))
+
+    ## Display the start messages at equally spaced intervals down the screen.
+    screen.blit(startScreenSurface1, (500, 1/7 * 0.9*centre[y]*2))
+    screen.blit(startScreenSurface2, (500, 2/7 * 0.9*centre[y]*2))
+    screen.blit(startScreenSurface3, (500, 3/7 * 0.9*centre[y]*2))
+    screen.blit(startScreenSurface4, (500, 4/7 * 0.9*centre[y]*2))
+    screen.blit(startScreenSurface5, (500, 5/7 * 0.9*centre[y]*2))
+    screen.blit(startScreenSurface6, (500, 6/7 * 0.9*centre[y]*2))
+    screen.blit(startScreenSurface7, (500, 7/7 * 0.9*centre[y]*2))
+
+    pygame.display.flip()
+    clock.tick(framerate)
+
 ## Finds the centre of mass of the system
 def com(planets):
     com = np.array([0.0,0.0,0.0])
@@ -374,7 +453,9 @@ comparisonSurface1 = pygame.Surface((centre[x]-3, centre[y]*2))
 comparisonSurface2 = pygame.Surface((centre[x]-3, centre[y]*2))
 font = pygame.font.SysFont('codenewroman', 18)
 bigFont = pygame.font.SysFont('codenewroman', 22)
+## Menu surface 1 is for displaying the energies
 menuSurface1 = pygame.Surface((400, 200), pygame.SRCALPHA)
+## Menu surface 2 is for displaying planet info
 menuSurface2 = pygame.Surface((400, 200), pygame.SRCALPHA)
 menuSurface1.set_alpha(128)
 menuSurface2.set_alpha(128)
@@ -390,28 +471,7 @@ while not started:
             if event.key == pygame.K_RETURN:
                 started = True
 
-    text1 = "Press the left and right arrow keys to switch between planets"
-    text2 = "Press the up and down arrow keys to speed up and slow down time"
-    text3 = "Press the space key to switch the focus to the centre of mass of the solar system"
-    text4 = "Press 'C' to enter comparison mode to compare sizes of planets"
-    text5 = "Press 'A' to edit the strength of gravity (G) and the mass of planets"
-    text6 = "Press Enter to start the program!"
-    startScreenSurface1 = bigFont.render(text1, True, (0, 255, 255))
-    startScreenSurface2 = bigFont.render(text2, True, (0, 255, 255))
-    startScreenSurface3 = bigFont.render(text3, True, (0, 255, 255))
-    startScreenSurface4 = bigFont.render(text4, True, (0, 255, 255))
-    startScreenSurface5 = bigFont.render(text5, True, (0, 255, 255))
-    startScreenSurface6 = bigFont.render(text6, True, (255, 0, 0))
-
-    screen.blit(startScreenSurface1, (600, 200))
-    screen.blit(startScreenSurface2, (600, 336))
-    screen.blit(startScreenSurface3, (600, 472))
-    screen.blit(startScreenSurface4, (600, 608))
-    screen.blit(startScreenSurface5, (600, 744))
-    screen.blit(startScreenSurface6, (600, 880))
-
-    pygame.display.flip()
-    clock.tick(framerate)
+    displayStartScreen()
 
 while running:
     screen.fill((0,0,0))
@@ -455,20 +515,19 @@ while running:
             ## for something the size of a satellite compared to something the size of our sun
             elif event.key == pygame.K_w:
                 if changingAttributes:
-                    G += 0.5*10**maths.floor((maths.log(abs(G), 10)))
+                    G += 0.5*10**maths.floor((maths.log(G, 10)))
             elif event.key == pygame.K_s:
                 if changingAttributes:
-                    G -= 0.5*10**maths.floor((maths.log(abs(G), 10)))
+                    G -= 0.5*10**maths.floor((maths.log(G, 10)))
             elif event.key == pygame.K_e:
                 if changingAttributes:
                     oldMass = planets[focus].getMass()
                     if not comFocus:
-                        planets[focus].addMass(0.5*10**maths.floor(maths.log(abs(planets[focus].getMass())+1,10)))
-                        
+                        planets[focus].addMass(0.5*10**maths.floor(maths.log(planets[focus].getMass()+1,10)))
             elif event.key == pygame.K_d:
                 if changingAttributes:
                     if not comFocus:
-                        planets[focus].addMass(-0.5*10**maths.floor(maths.log(abs(planets[focus].getMass())+1,10)))
+                        planets[focus].addMass(-0.5*10**maths.floor(maths.log(planets[focus].getMass())+1,10))
                         
             
         if event.type == pygame.MOUSEWHEEL:
@@ -496,6 +555,10 @@ while running:
         screen.blit(comparisonSurface1, (0, 0))
         screen.blit(comparisonSurface2, (centre[x]+3, 0))
         pygame.draw.line(screen, "blue", [centre[x],0], [centre[x],centre[y]*2], 6)
+        ## Display info on both selected planets
+        displayPlanetInfo(planets[planetsToCompare[0]],planets, 20)
+        displayPlanetInfo(planets[planetsToCompare[1]], planets, centre[x]*2-280)
+
     else:
         adjustment = focusAdjustment(planets, focus, comFocus)
         displayPlanets(planets, adjustment, screen)
@@ -505,59 +568,11 @@ while running:
 
         ## Properties includes the key physical attributes of the system, potential energy, kinetic energy, momenteum
         properties = sumPhysicalProperties(planets)
-
         ## Displaying the menu
-        ## This is absolutely horrible code but it was the best way I could figure out of doing it
-
-        ## Menu surface 1 is for displaying the energies
-        ## Menu surface 2 is for the interactive bit, displaying planet info and changing things about the planet / physical constants
-        ## The reason I have multiple textSurfaces is because pygame does not seem to support the "\n" character,
-        ## so this is the only way I could get new lines.
-        pygame.draw.rect(menuSurface1, 'black', (0, 0, 360, 150))
-        if changingAttributes:
-            text1 = "PRESS 'A' TO STOP EDITING ATTRIBUTES"
-            text2 = "PRESS 'W' TO INCREASE VALUE OF G"
-            text3 = "PRESS 'S' TO DECREASE VALUE OF G"
-            text4 = "PRESS 'E' TO INCREASE PLANET'S MASS"
-            text5 = "PRESS 'D' TO DECREASE PLANET'S MASS"
-            text6 = "G: " + f'{G} Nm²/kg²'
-        else:
-            text1 = "PRESS 'A' TO EDIT G & PLANET MASS"
-            text2 = "GPE: " + f'{properties[0]:.2e} J'
-            text3 = "KE: " + f'{properties[1]:.2e} J'
-            text4 = "TOTAL ENERGY: " + f'{properties[0]+properties[1]:.2e} J'
-            text5 = "TOTAL MOMENTUM: " + f'{vec.mag(properties[2]):.2e} Ns'
-            text6 = "G: " + f'{G} Nm²/kg²'
-        textSurface1 = font.render(text1, True, (0, 255, 255))
-        textSurface2 = font.render(text2, True, (0, 255, 255))
-        textSurface3 = font.render(text3, True, (0, 255, 255))
-        textSurface4 = font.render(text4, True, (0, 255, 255))
-        textSurface5 = font.render(text5, True, (0, 255, 255))
-        textSurface6 = font.render(text6, True, (0, 255, 255))
-        screen.blit(menuSurface1, (0, 0))
-        screen.blit(textSurface1, (20, 10))
-        screen.blit(textSurface2, (20, 30))
-        screen.blit(textSurface3, (20, 50))
-        screen.blit(textSurface4, (20, 70))
-        screen.blit(textSurface5, (20, 90))
-        screen.blit(textSurface6, (20, 110))
-
-        pygame.draw.rect(menuSurface2, 'black', (0, 0, 300, 125))
+        displayAttributeInfo(changingAttributes, properties, 20, menuSurface1)
         ## Display info on current planet as requested by client
         if not comFocus:
-            text5 = "OBJECT: " + f'{planets[focus].getName()}'
-            text6 = "MASS: " + f'{planets[focus].getMass():.2e} kg'
-            text7 = "RADIUS: " + f'{planets[focus].getSize()/1000:.2e} km'
-            text8 = "DISTANCE FROM SUN: " + f'{vec.mag(planets[focus].getPos()-planets[0].getPos())/1000:.2e} km'
-            textSurface5 = font.render(text5, True, (0, 255, 255))
-            textSurface6 = font.render(text6, True, (0, 255, 255))
-            textSurface7 = font.render(text7, True, (0, 255, 255))
-            textSurface8 = font.render(text8, True, (0, 255, 255))
-            screen.blit(menuSurface2, (1620, 00))
-            screen.blit(textSurface5, (1640, 10))
-            screen.blit(textSurface6, (1640, 30))
-            screen.blit(textSurface7, (1640, 50))
-            screen.blit(textSurface8, (1640, 70))
+            displayPlanetInfo(planets[focus], planets, centre[x]*2-280, menuSurface2)
 
     pygame.display.flip()
     clock.tick(framerate)
