@@ -80,13 +80,15 @@ def displayLines(planets, adjustment, focus, comFocus, surface):
         
 def drawPlanet(p, position, surface):
     global distScale
+    scaledSize = p.getSize()*distScale
     ## If the planet would fill the whole screen, there's no point trying to draw
     ## more of the circle than necessary, just fill the screen.
     ## This avoids severe lag when zooming in very closely.
-    if distScale*p.getSize() > vec.mag(centre):
+    if scaledSize > vec.mag(centre):
         surface.fill(p.getColour())
     else:
-        pygame.draw.circle(surface,p.getColour(),position,p.getSize()*distScale)
+        pygame.draw.circle(surface,p.getColour(),position,scaledSize)
+
     
 ## NASA's data on the solar system is all given in 3 dimensional coordinates
 ## So a simulation of 3d space is used for this program. It also leads to a more accurate model.
