@@ -96,7 +96,11 @@ def getEphemeris(target, useGM=False, ignoreMassSize=False, mass=0, size=0):
 
 ## Testing to see if the parser works before implementing it in main program
 def main():
-    print(getEphemeris(301, True))
+    ephemeris = getEphemeris(399)
+    print("RADIUS:", ephemeris[0], "m")
+    print("MASS:", ephemeris[1], "kg")
+    print("POSITION:", ephemeris[2])
+    print("VELOCITY:", ephemeris[3])
 
 if __name__ == "__main__":
     main()

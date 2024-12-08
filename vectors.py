@@ -25,4 +25,21 @@ def unit(vec):
 ## By taking the "negative reciprocal", swapping the values and multiplying one of them by -1
 def normal(vec):
     normal = np.array([-1*vec[y],vec[x]])
-    return unit(normal)        
+    return unit(normal)
+
+## Main is just used for testing purposes
+def main():
+    print("DOT PRODUCT BETWEEN (-1,-2), (3,4):", dot(np.array([1, 2]), np.array([3, 4])))
+    print('---')
+    print("MAGNITUDE OF (3,4):", mag(np.array([3, 4])))
+    print("UNIT OF (3,4):", unit(np.array([3,4])))
+    print("NORMAL TO (3, 4):", normal(np.array([3, 4])))
+    print("DOT BETWEEN NORMAL TO (3,4) AND (3,4) SHOULD BE ZERO:", dot(np.array([3, 4]), normal(np.array([3, 4]))))
+    print('---')
+    print("MAGNITUDE OF (-1, -2):", mag(np.array([-1,- 2])))
+    print("UNIT OF (-1, -2):", unit(np.array([-1,- 2])))
+    print("NORMAL TO (-1, -2):", normal(np.array([-1,- 2])))
+    print("DOT BETWEEN NORMAL TO (-1, -2) AND (-1, -2) SHOULD BE ZERO:", dot(np.array([-1, -2]), normal(np.array([-1,- 2]))))
+
+if __name__ == "__main__":
+    main()
