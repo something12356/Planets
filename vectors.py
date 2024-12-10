@@ -29,7 +29,7 @@ def normal(vec):
 
 ## Main is just used for testing purposes
 def main():
-    print("DOT PRODUCT BETWEEN (-1,-2), (3,4):", dot(np.array([1, 2]), np.array([3, 4])))
+    print("DOT PRODUCT BETWEEN (-1,-2), (3,4):", dot(np.array([-1, -2]), np.array([3, 4])))
     print('---')
     print("MAGNITUDE OF (3,4):", mag(np.array([3, 4])))
     print("UNIT OF (3,4):", unit(np.array([3,4])))
