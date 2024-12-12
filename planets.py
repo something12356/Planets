@@ -188,6 +188,8 @@ def com(planets):
         massSum += p.getMass()
     return positionMassSum/massSum
 
+## Uses vectors to find the adjustment vector from either the centre of the screen to the centre of mass,
+##  or the centre of the sceren to the currently selected planet
 def focusAdjustment(planets, focus, comFocus):
     if comFocus:
         currentFocus = com(planets)
@@ -203,17 +205,21 @@ def simulateTick(planets, focus, timeScale):
         p1.addKE(-p1.getKE())
         p1.addMomentum(-p1.getMomentum())
 
-        ## Takes position before and after so that the lines for the orbits can be drawn
+        ## Only need to look at the planets in the list after p1 as we make use of Newton's third law
+        ## To add force to p2 when finding the force on p1
+        ## Saves a lot of iterations
         for p2 in planets[planets.index(p1)+1:]:
             p1gravity = p1.gravity(p2)
             p1.addForce(p1gravity)
             ## Can take away here due to Newton's third law, each force has equal and opposite reaction force
+            ## This lets us skip the current p1 when finding the force on p2 later, saving time
             p2.addForce(-p1gravity)
             ## Draws force arrows showing the forces acting on the planet
             if planets.index(p1) == focus:
                 p1.addArrow(["white", np.copy(p1gravity)])
             if planets.index(p2) == focus:
                 p2.addArrow(["white", -1*np.copy(p1gravity)])
+        ## Draw the resultant arrow in the colour of the planet
         if planets.index(p1) == focus:
             p1.addArrow([p1.getColour(), np.copy(p1.getResultant())])
 
@@ -236,6 +242,7 @@ def sumPhysicalProperties(planets):
     gpe = 0
     ke = 0
     momentum = 0
+    ## Add up all the attributes for each planet
     for p in planets:
         gpe += p.getGPE()
         ke += p.getKE()
@@ -345,6 +352,7 @@ class celestialBody:
     def verlet(self, timeScale):
         self.__vel += self.getAccel()*timeScale
         self.__pos += self.getVel()*timeScale
+        ## Calculate KE and momentum while we're updating velocity so that we don't have to do it later
         self.addKE(0.5*self.getMass()*vec.mag(self.getVel())**2)
         self.addMomentum(self.getMass()*self.getVel())
 
@@ -355,6 +363,7 @@ class celestialBody:
     def gravity(self, planet2):
         r = planet2.getPos() - self.getPos()
         F = G*(self.getMass()*planet2.getMass())/(vec.mag(r)**2)
+        ## Calculate GPE while working out gravitational force so we don't have to do it later
         self.addGPE(-F*vec.mag(r))
         planet2.addGPE(F*vec.mag(r))
         return F*vec.unit(r)
@@ -406,6 +415,7 @@ def generateSolarSystem():
     moonColours = [(111, 109, 114), (253, 245, 144), (68, 169, 241), (92, 88, 76), (70, 103, 97)]
     ephemeris = horizonsParser.getEphemeris(10) ## Adding the sun
     planets.append(planet(planetNames[0], ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[0]))
+
     for i in range(1, 10):
         ephemeris = horizonsParser.getEphemeris(i*100+99)
         ## This is adding the moon, it makes sense for it to be just after earth in the planet order
@@ -416,10 +426,10 @@ def generateSolarSystem():
         ## Despite all other masses being given in kilograms
         ## I do not know why
         ## Dividing ephemeris[1] by 1000 resolves that problem
-        ## Here we also add the planets Europa, Io, Ganymede and Callisto (this is done at i=6 so that they are AFTER jupiter in the list)
-        ## Their IDs follow the pattern 501, 502, 503 etc so 500+j is used to generate them
         if i == 5:
             ephemeris[1] = ephemeris[1]/1000
+        ## Here we add Jupiter's 4 largest moons; Europa, Io, Ganymede and Callisto (this is done at i=6 so that they are AFTER jupiter in the list)
+        ## Their IDs follow the pattern 501, 502, 503 etc so 500+j is used to generate them
         if i == 6:
             for j in range(1,5):
                 moonEphemeris = horizonsParser.getEphemeris(500+j, True)
@@ -435,16 +445,18 @@ def generateSolarSystem():
 
 planets = generateSolarSystem()
 
+## LINE_LENGTH is the amount of lines each planet can have so that the total amount of lines never exceeds the maximum lines
 ## The -3 here is because of the moons, voyager 1 and 2, which are not usually visible and so will not cause extra lag from their orbital paths
 LINE_LENGTH = int(MAX_LINES / (len(planets)-7))
 pygame.init()
 screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
-## Centre is never edited and is needed by lots of functions so makes sense to have it as global
+## Centre is never edited and is needed by lots of functions so makes sense to have it as a global variable
 centre = np.array(pygame.display.get_surface().get_size())/2
 
 def main():
     global distScale
     global zoomScale
+    global centre
     global G
     framerate = 120
     ## Time-scale, how much vel and position should change per tick
@@ -456,21 +468,29 @@ def main():
     clock = pygame.time.Clock()
     started = False
     running = True
+    ## List of arrows to be drawn
     arrowsToDraw = []
+    ## What planet the camera should center on
     focus = 0
     comFocus = False
+    ## Whether or not to draw arrows
     arrows = False
+    ## Whether or not we're in comparison mode
     comparison = False
+    ## Whether to let the user change attributes
     changingAttributes = False
     planetsToCompare = [0, 6]
+    ## Creating the surfaces for the planets being compared to be drawn on
     comparisonSurface1 = pygame.Surface((centre[x]-3, centre[y]*2))
     comparisonSurface2 = pygame.Surface((centre[x]-3, centre[y]*2))
+    ## These are the two fonts that will be used in the menus
     font = pygame.font.SysFont('codenewroman', 18)
     bigFont = pygame.font.SysFont('codenewroman', 22)
-    ## Menu surface 1 is for displaying the energies
+    ## Menu surface 1 is for displaying the energies and momentum etc
     menuSurface1 = pygame.Surface((400, 200), pygame.SRCALPHA)
     ## Menu surface 2 is for displaying planet info
     menuSurface2 = pygame.Surface((400, 200), pygame.SRCALPHA)
+    ## Make them slightly transparent so that it looks nicer
     menuSurface1.set_alpha(128)
     menuSurface2.set_alpha(128)
     ## Display a start screen that also explains all the keybinds
@@ -481,6 +501,7 @@ def main():
                 running = False
 
             if event.type == pygame.KEYDOWN:
+                ## If the user presses enter, start the program
                 if event.key == pygame.K_RETURN:
                     started = True
 
@@ -526,6 +547,8 @@ def main():
                 ## To achieve this, I make the increments G go up in scale with the order of magnitude of G.
                 ## The same thing is done with masses of planets, as a very different increment is needed
                 ## for something the size of a satellite compared to something the size of our sun
+                ## This also has the bonus of making it impossible to make G or a mass 0 or negative, which prevents division by zero
+                ## and other peculiar bugs
                 elif event.key == pygame.K_w:
                     if changingAttributes:
                         G += 0.5*10**maths.floor((maths.log(G, 10)))
@@ -545,11 +568,11 @@ def main():
                 
             if event.type == pygame.MOUSEWHEEL:
                 if event.y == 1:
-                    if zoomScale < distScale:
+                    if zoomScale < distScale: ## Linear interpolation to bring zoomScale much closer to distScale if it's less than it
                         zoomScale = zoomScale*0.3 + distScale*0.7
                     zoomScale += 0.4*zoomScale
                 if event.y == -1:
-                    if zoomScale > distScale:
+                    if zoomScale > distScale: ## Linear interpolation to bring zoomScale much closer to distScale if it's greater than it
                         zoomScale = zoomScale*0.3 + distScale*0.7
                     zoomScale -= 0.4*zoomScale
 
@@ -574,11 +597,11 @@ def main():
             displayPlanetInfo(font, planets[planetsToCompare[1]], planets, centre[x]*2-280, menuSurface2)
 
         else:
-            adjustment = focusAdjustment(planets, focus, comFocus)
+            adjustment = focusAdjustment(planets, focus, comFocus) # Calculate the adjustment so we can display planets
             displayPlanets(planets, adjustment, screen)
             displayLines(planets, adjustment, focus, comFocus, screen)
             if arrows:
-                displayArrows(planets, adjustment, focus, comFocus, screen)
+                displayArrows(planets, adjustment, focus, comFocus, screen) # Draw arrows if arrows is true
 
             ## Properties includes the key physical attributes of the system, potential energy, kinetic energy, momenteum
             properties = sumPhysicalProperties(planets)
@@ -588,6 +611,8 @@ def main():
             if not comFocus:
                 displayPlanetInfo(font, planets[focus], planets, centre[x]*2-280, menuSurface2)
 
-        pygame.display.flip()
-        clock.tick(framerate)
-main()
+        pygame.display.flip() # Update the display
+        clock.tick(framerate) # Move onto the next tick
+    
+if __name__ == "__main__":
+    main() # Run the program!
