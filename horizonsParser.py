@@ -9,6 +9,9 @@ import datetime
 def extractValue(text, expectingScale=False, conversionFactor=1):
     scaleAt = 0
     scale = 1
+    ## If there is a scale given (e.g. mass is in 10^24 kg) then it needs to be found
+    ## The scale will always include a '^' character, and this does not appear anywhere else in the ephemeris
+    ## So this is what is used to search for the scale
     if expectingScale:
         for i in range(50):
             if text[i] == '^':
