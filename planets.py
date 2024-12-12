@@ -56,7 +56,7 @@ def displayArrows(planets, adjustment, focus, comFocus, surface):
     if not comFocus:
         p = planets[focus]
         for arrow in p.getArrows():
-            drawArrow(surface, arrow[0], p.getScaledPos()[:2]+adjustment, p.getScaledPos()[:2]+2*10**-12*distScale*arrow[1][:2]/(maths.log(p.getMass()))+adjustment)
+            drawArrow(surface, arrow[0], p.getScaledPos()[:2]+adjustment, p.getScaledPos()[:2]+2*10**-11*distScale*arrow[1][:2]/(maths.log(p.getMass()))+adjustment)
 
 def displayLines(planets, adjustment, focus, comFocus, surface):
     for p in planets:
