@@ -449,7 +449,7 @@ planets = generateSolarSystem()
 ## The -3 here is because of the moons, voyager 1 and 2, which are not usually visible and so will not cause extra lag from their orbital paths
 LINE_LENGTH = int(MAX_LINES / (len(planets)-7))
 pygame.init()
-screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 ## Centre is never edited and is needed by lots of functions so makes sense to have it as a global variable
 centre = np.array(pygame.display.get_surface().get_size())/2
 
@@ -594,7 +594,7 @@ def main():
             pygame.draw.line(screen, "blue", [centre[x],0], [centre[x],centre[y]*2], 6)
             ## Display info on both selected planets
             displayPlanetInfo(font, planets[planetsToCompare[0]], planets, 20, menuSurface2)
-            displayPlanetInfo(font, planets[planetsToCompare[1]], planets, centre[x]*2-280, menuSurface2)
+            displayPlanetInfo(font, planets[planetsToCompare[1]], planets, centre[x]*2-320, menuSurface2)
 
         else:
             adjustment = focusAdjustment(planets, focus, comFocus) # Calculate the adjustment so we can display planets
@@ -609,7 +609,7 @@ def main():
             displayAttributeInfo(font, changingAttributes, properties, 20, menuSurface1)
             ## Display info on current planet as requested by client
             if not comFocus:
-                displayPlanetInfo(font, planets[focus], planets, centre[x]*2-280, menuSurface2)
+                displayPlanetInfo(font, planets[focus], planets, centre[x]*2-320, menuSurface2)
 
         pygame.display.flip() # Update the display
         clock.tick(framerate) # Move onto the next tick
