@@ -1,3 +1,5 @@
+## Program title: Solar System Simulation by Archie Pennycook
+
 import requests
 import numpy as np
 import datetime
@@ -7,6 +9,8 @@ import datetime
 ## The conversionFactor is because the program works in SI, but NASA sometimes uses kilometres and other non-SI units
 ## So it converts the unit back to SI
 def extractValue(text, expectingScale=False, conversionFactor=1):
+    ## scaleAt records the index wher the scale is
+    ## So that the second for loop can skip to the position after the scale
     scaleAt = 0
     scale = 1
     ## If there is a scale given (e.g. mass is in 10^24 kg) then it needs to be found
@@ -48,7 +52,14 @@ def getEphemeris(target, useGM=False, ignoreMassSize=False, mass=0, size=0):
     target = str(target)
     startTime = datetime.datetime.now().strftime("%Y-%m-%d")
     stopTime = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-    response = requests.get("https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='"+target+"'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&START_TIME='"+startTime+"'&STOP_TIME='"+stopTime+"'&CENTER='500@0'&STEP_SIZE='1%20d'&QUANTITIES=''")
+    ## These request segments only exist to breakup the request so that it is visible in screenshots
+    ## As having it all in one line would lead to a very wide screenshot
+    ## Which would not be easy to read for the examiner
+    requestSegment1 = "https://ssd.jpl.nasa.gov/api/horizons.api?format=text&COMMAND='"
+    requestSegment2 = "'&OBJ_DATA='YES'&MAKE_EPHEM='YES'&EPHEM_TYPE='VECTORS'&START_TIME='"
+    requestSegment3 = "'&STOP_TIME='"
+    requestSegment4 = "'&CENTER='500@0'&STEP_SIZE='1%20d'&QUANTITIES=''"
+    response = requests.get(requestSegment1+target+requestSegment2+startTime+requestSegment3+stopTime+requestSegment4)
 
     position = np.array([0.0, 0.0, 0.0])
     velocity = np.array([0.0, 0.0, 0.0])
@@ -69,18 +80,18 @@ def getEphemeris(target, useGM=False, ignoreMassSize=False, mass=0, size=0):
         ## so that's why ignoreMassSize is a thing
         if not ignoreMassSize:
             if not useGM:
-                ## Mass is in kg, so no multiplying by a factor of 10 is needed
-                if response.text[i:i+6].lower() == 'mass x' or response.text[i:i+7].lower() == 'mass, 1' or response.text[i:i+7].lower() == 'mass, x':
-                    mass = extractValue(response.text[i:i+50],True)
+                
+                if response.text[i:i+6].lower() == 'mass x' or response.text[i:i+7].lower() in ['mass, 1', 'mass, x']:
+                    mass = extractValue(response.text[i:i+50],True) # Mass is in kg, so no multiplying by a factor of 10 is needed
 
             ## For some bodies only G*mass, rather than the mass, is given, due to quirks in how we calculate the mass of big things
             ## in this case I have to work out the mass myself from the GM value given.
-            ## NASA is not standard AT ALL about how they label the GM value in their ephemeris so I have to have a lot of or statements here
+            ## NASA is not standard AT ALL about how they label the GM value in their ephemeris so I use a list with all the possibilities
             ## This is needed for Jupiter's moons
             else:
-                if response.text[i:i+6].lower() == 'gm, km' or response.text[i:i+6].lower() == 'gm   (' or response.text[i:i+6].lower() == 'gm (km':
+                if response.text[i:i+6].lower() in ['gm, km', 'gm   (', 'gm (km']:
                     mass = extractValue(response.text[i+20:i+50], False, 1/(6.6743015*10**-20))
-            if response.text[i:i+16].lower() == 'vol. mean radius' or response.text[i:i+16].lower() == 'mean radius (km)':
+            if response.text[i:i+16].lower() in ['vol. mean radius', 'mean radius (km)']:
                 size = extractValue(response.text[i:i+50], False, 1000)
 
         if response.text[i:i+3] in posDict:
@@ -97,7 +108,7 @@ def getEphemeris(target, useGM=False, ignoreMassSize=False, mass=0, size=0):
 
     return [size, mass, position, velocity]
 
-## Testing to see if the parser works before implementing it in main program
+## This is used for testing purposes, for test 01
 def main():
     ephemeris = getEphemeris(399)
     print("RADIUS:", ephemeris[0], "m")

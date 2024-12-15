@@ -1,23 +1,181 @@
+## Program title: Solar System Simulation by Archie Pennycook
+
 import math as maths
 import pygame
 import numpy as np
 import vectors as vec
 import horizonsParser
 
-### These are all either constants or are variables that are only ever changed by main(), and so
-### it's okay to define them here and use them globally.
+### These are all either constants or are variables that are only ever changed by main(),
+### and so it's okay to define them here and use them globally.
 ## The distance constant is used to translate SI units (metres) into pixels.
 ## 4 * 10**-9 means that the earth is about 600 pixels from the sun, for reference.
 distScale = 4 * 10**-9
 zoomScale = distScale
 x = 0
 y = 1
-
 ## Gravitational constant, defines how strong gravity is. Real life G = 6.6743015*10**-11
 G = 6.6743015*10**-11
-
 ## How long to draw the lines representing the planets' orbits.
 MAX_LINES = 3000
+
+class celestialBody:
+    def __init__(self, name, size, mass, pos, vel, colour):
+        self.__host = None
+        self.__name = name
+        self.__size = size
+        self.__vel = vel
+        self.__mass = mass
+        self.__pos = pos
+        self.__colour = colour
+        self.__accel = 0
+        self.__resultant = 0
+        ## KE and GPE are standard acronyms for kinetic energy and gravitational potential energy
+        self.__ke = 0
+        self.__gpe = 0
+        self.__momentum = 0
+        self.__records = []
+        self.__arrows = []
+    
+    ## All the getters and setters
+    def getHost(self):
+        return self.__host
+
+    def getName(self):
+        return self.__name
+
+    def getPos(self):
+        return self.__pos
+
+    def getScaledPos(self):
+        return scaledPos(self.getPos())
+
+    def getMass(self):
+        return self.__mass
+
+    def getVel(self):
+        return self.__vel
+    
+    def getAccel(self):
+        return self.__accel
+
+    def getResultant(self):
+        return self.__resultant
+
+    def getColour(self):
+        return self.__colour
+
+    def getSize(self):
+        return self.__size
+
+    def getGPE(self):
+        return self.__gpe
+
+    def getKE(self):
+        return self.__ke
+
+    def getMomentum(self):
+        return self.__momentum
+
+    def getRecords(self):
+        return self.__records
+
+    def getArrows(self):
+        return self.__arrows
+
+    def addRecord(self, record):
+        self.__records.append(record)
+        ## Gets rid of excess lines, prevents them from becoming too long and lagging the system
+        if len(self.__records) > LINE_LENGTH:
+            self.__records = self.__records[len(self.__records)-LINE_LENGTH:]
+    
+    def addArrow(self, arrow):
+        self.__arrows.append(arrow)
+        ## There should never be more than the amount of planets + 1 arrows at a time,
+        ## if there are, then some have been left over from previous ticks, and should be cleaned up
+        if len(self.__arrows) > len(planets):
+            self.__arrows = self.__arrows[len(self.__arrows)-len(planets):]
+
+    ## Adds a force to the resultant force on the planet
+    def addForce(self, force):
+        self.__resultant += force
+
+    def addGPE(self, energy):
+        self.__gpe += energy
+
+    def addKE(self, energy):
+        self.__ke += energy
+
+    def addMomentum(self, momentum):
+        self.__momentum += momentum
+
+    def addMass(self, mass):
+        self.__mass += mass
+
+    ## Sets velocity
+    ## Uses F = ma to find acceleration, add to vel
+    def secondLaw(self):
+        self.__accel = self.getResultant()/self.getMass()
+   
+    ## Sets position
+    ## Updates velocity and then moves a planet by its velocity
+    ## This is verlet integration
+    def verlet(self, timeScale):
+        ## Complex scientific modelling
+        self.__vel += self.getAccel()*timeScale
+        self.__pos += self.getVel()*timeScale
+        ## Calculate KE and momentum while we're updating velocity so that we don't have to do it later
+        self.addKE(0.5*self.getMass()*vec.mag(self.getVel())**2)
+        self.addMomentum(self.getMass()*self.getVel())
+
+    ## End of getters and setters
+
+    ## Uses F = GMm/r**2 to work out the force on a planet
+    ## Multiplies by unit(r) to make the force a vector.
+    def gravity(self, planet2):
+        ## Complex scientific modelling
+        r = planet2.getPos() - self.getPos()
+        F = G*(self.getMass()*planet2.getMass())/(vec.mag(r)**2)
+        ## Calculate GPE while working out gravitational force so we don't have to do it later
+        self.addGPE(-F*vec.mag(r))
+        planet2.addGPE(F*vec.mag(r))
+        return F*vec.unit(r)
+
+## The distinction between planet and satellite here is just whether or not
+## they have a specific host. This has no relation to actual planets in real life
+## The sun is a planet in my code.
+class planet(celestialBody):
+    pass
+
+## Satellites (natural like the moon or manmade) show their orbits around their host planet,
+## rather than showing their actual path through space like other celestial bodies do.
+## This is more useful as it is not easy to see how the satellite orbits its planet otherwise
+## The "host" attribute is a planet object, aggregation is used to access the host's attributes
+class satellite(celestialBody):
+    def __init__(self, name, size, mass, pos, vel, colour, host):
+        super().__init__(name, size, mass, pos, vel, colour)
+        self.__host = host
+        self.__resultant = 0
+        self.__records = []
+
+    def getHost(self):
+        return self.__host
+
+    ## Adds the host's postion to the line so that it can be displayed, then returns that
+    def getRecords(self):
+        hostPos = self.getHost().getPos()
+        updatedRecords = [i+hostPos for i in self.__records]
+        return updatedRecords
+
+    ## hostLine is the line drawn for the host on the current tick.
+    ## Subtracting this from the line for our satellite "removes" the movement of the host.
+    ## This leaves only the movement of the satellite around the host.
+    def addRecord(self, record):
+        hostPos = self.getHost().getPos()
+        record = record - hostPos
+        self.__records.append(record)
+        if len(self.__records) > LINE_LENGTH:
+            self.__records = self.__records[len(self.__records)-LINE_LENGTH:]
 
 ## Switching from one zoom to another instantly is very jarring. 
 ## This uses interpolation to smoothly transition between zooms.
@@ -35,7 +193,8 @@ def scaledPos(position):
     global distScale
     return distScale * position
 
-## Draws an arrow by drawing a line, picking two points either side of that line, and drawing lines from the end of the first line to those two points
+## Draws an arrow by drawing a line, picking two points either side of that line,
+## and drawing lines from the end of the first line to those two points
 def drawArrow(surface, colour, startPos, endPos):
     ## My solar system is in 3d space, but pygame can only handle 2d lines.
     ## The [:2] is necessary to deal with that.
@@ -89,7 +248,6 @@ def drawPlanet(p, position, surface):
     else:
         pygame.draw.circle(surface,p.getColour(),position,scaledSize)
 
-    
 ## NASA's data on the solar system is all given in 3 dimensional coordinates
 ## So a simulation of 3d space is used for this program. It also leads to a more accurate model.
 ## However, displaying 3d graphics is computationally intensive and doesn't contribute to understanding
@@ -208,6 +366,7 @@ def simulateTick(planets, focus, timeScale):
         ## Only need to look at the planets in the list after p1 as we make use of Newton's third law
         ## To add force to p2 when finding the force on p1
         ## Saves a lot of iterations
+        ## This is complex scientific modelling
         for p2 in planets[planets.index(p1)+1:]:
             p1gravity = p1.gravity(p2)
             p1.addForce(p1gravity)
@@ -249,161 +408,6 @@ def sumPhysicalProperties(planets):
         momentum += p.getMomentum()
     return [gpe, ke, momentum]
 
-class celestialBody:
-    def __init__(self, name, size, mass, pos, vel, colour):
-        self.__host = None
-        self.__name = name
-        self.__size = size
-        self.__vel = vel
-        self.__mass = mass
-        self.__pos = pos
-        self.__colour = colour
-        self.__accel = 0
-        self.__resultant = 0
-        ## KE and GPE are standard acronyms for kinetic energy and gravitational potential energy
-        self.__ke = 0
-        self.__gpe = 0
-        self.__momentum = 0
-        self.__records = []
-        self.__arrows = []
-    
-    ## All the getters and setters
-    def getHost(self):
-        return self.__host
-
-    def getName(self):
-        return self.__name
-
-    def getPos(self):
-        return self.__pos
-
-    def getScaledPos(self):
-        return scaledPos(self.getPos())
-
-    def getMass(self):
-        return self.__mass
-
-    def getVel(self):
-        return self.__vel
-    
-    def getAccel(self):
-        return self.__accel
-
-    def getResultant(self):
-        return self.__resultant
-
-    def getColour(self):
-        return self.__colour
-
-    def getSize(self):
-        return self.__size
-
-    def getGPE(self):
-        return self.__gpe
-
-    def getKE(self):
-        return self.__ke
-
-    def getMomentum(self):
-        return self.__momentum
-
-    def getRecords(self):
-        return self.__records
-
-    def getArrows(self):
-        return self.__arrows
-
-    def addRecord(self, record):
-        self.__records.append(record)
-        ## Gets rid of excess lines, prevents them from becoming too long and lagging the system
-        if len(self.__records) > LINE_LENGTH:
-            self.__records = self.__records[len(self.__records)-LINE_LENGTH:]
-    
-    def addArrow(self, arrow):
-        self.__arrows.append(arrow)
-        ## There should never be more than the amount of planets + 1 arrows at a time,
-        ## if there are, then some have been left over from previous ticks, and should be cleaned up
-        if len(self.__arrows) > len(planets):
-            self.__arrows = self.__arrows[len(self.__arrows)-len(planets):]
-
-    ## Adds a force to the resultant force on the planet
-    def addForce(self, force):
-        self.__resultant += force
-
-    def addGPE(self, energy):
-        self.__gpe += energy
-
-    def addKE(self, energy):
-        self.__ke += energy
-
-    def addMomentum(self, momentum):
-        self.__momentum += momentum
-
-    def addMass(self, mass):
-        self.__mass += mass
-
-    ## Sets velocity
-    ## Uses F = ma to find acceleration, add to vel
-    def secondLaw(self):
-        self.__accel = self.getResultant()/self.getMass()
-   
-    ## Sets position
-    ## Updates velocity and then moves a planet by its velocity
-    def verlet(self, timeScale):
-        self.__vel += self.getAccel()*timeScale
-        self.__pos += self.getVel()*timeScale
-        ## Calculate KE and momentum while we're updating velocity so that we don't have to do it later
-        self.addKE(0.5*self.getMass()*vec.mag(self.getVel())**2)
-        self.addMomentum(self.getMass()*self.getVel())
-
-    ## End of getters and setters
-
-    ## Uses F = GMm/r**2 to work out the force on a planet
-    ## Multiplies by unit(r) to make the force a vector.
-    def gravity(self, planet2):
-        r = planet2.getPos() - self.getPos()
-        F = G*(self.getMass()*planet2.getMass())/(vec.mag(r)**2)
-        ## Calculate GPE while working out gravitational force so we don't have to do it later
-        self.addGPE(-F*vec.mag(r))
-        planet2.addGPE(F*vec.mag(r))
-        return F*vec.unit(r)
-
-## The distinction between planet and satellite here is just whether or not
-## they have a specific host. This has no relation to actual planets in real life
-## The sun is a planet in my code.
-class planet(celestialBody):
-    pass
-
-## Satellites (natural like the moon or manmade) show their orbits around their host planet,
-## rather than showing their actual path through space like other celestial bodies do.
-## This is more useful as it is not easy to see how the satellite orbits its planet otherwise
-## The "host" attribute is a planet object, aggregation is used to access the host's attributes
-class satellite(celestialBody):
-    def __init__(self, name, size, mass, pos, vel, colour, host):
-        super().__init__(name, size, mass, pos, vel, colour)
-        self.__host = host
-        self.__resultant = 0
-        self.__records = []
-
-    def getHost(self):
-        return self.__host
-
-    ## Adds the host's postion to the line so that it can be displayed, then returns that
-    def getRecords(self):
-        hostPos = self.getHost().getPos()
-        updatedRecords = [i+hostPos for i in self.__records]
-        return updatedRecords
-
-    ## hostLine is the line drawn for the host on the current tick.
-    ## Subtracting this from the line for our satellite "removes" the movement of the host.
-    ## This leaves only the movement of the satellite around the host.
-    def addRecord(self, record):
-        hostPos = self.getHost().getPos()
-        record = record - hostPos
-        self.__records.append(record)
-        if len(self.__records) > LINE_LENGTH:
-            self.__records = self.__records[len(self.__records)-LINE_LENGTH:]
-
 def generateSolarSystem():
     ## This list contains the name, NASA ID and colour of all the planets
     planets = []
@@ -413,6 +417,7 @@ def generateSolarSystem():
     ## I do not want to add all 100+ moons of Jupiter, Saturn, Uranus and Neptune, hence only the important ones, our moon and the Galilean moons, are added
     moonNames = ["Moon", "Io", "Europa", "Ganymede", "Callisto"]
     moonColours = [(111, 109, 114), (253, 245, 144), (68, 169, 241), (92, 88, 76), (70, 103, 97)]
+    ## The use of getEphemeris here is a complex API call
     ephemeris = horizonsParser.getEphemeris(10) ## Adding the sun
     planets.append(planet(planetNames[0], ephemeris[0], ephemeris[1], ephemeris[2], ephemeris[3], planetColours[0]))
 
@@ -449,6 +454,7 @@ planets = generateSolarSystem()
 ## The -3 here is because of the moons, voyager 1 and 2, which are not usually visible and so will not cause extra lag from their orbital paths
 LINE_LENGTH = int(MAX_LINES / (len(planets)-7))
 pygame.init()
+## Screen is never edited and is needed by lots of functions so makes sense to have it as a global variable
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 ## Centre is never edited and is needed by lots of functions so makes sense to have it as a global variable
 centre = np.array(pygame.display.get_surface().get_size())/2
@@ -458,6 +464,7 @@ def main():
     global zoomScale
     global centre
     global G
+    global screen
     framerate = 120
     ## Time-scale, how much vel and position should change per tick
     ## Lower value = slower but more accurate simulation
@@ -508,8 +515,8 @@ def main():
         displayStartScreen(bigFont)
 
     while running:
-        screen.fill((0,0,0))
-        for event in pygame.event.get():
+        screen.fill((0,0,0)) ## Make the background black
+        for event in pygame.event.get(): ## Handle inputs
             if event.type == pygame.QUIT:
                 running = False
 
@@ -564,8 +571,7 @@ def main():
                     if changingAttributes:
                         if not comFocus:
                             planets[focus].addMass(-0.5*10**maths.floor(maths.log(planets[focus].getMass()+1,10)))
-                            
-                
+                                            
             if event.type == pygame.MOUSEWHEEL:
                 if event.y == 1:
                     if zoomScale < distScale: ## Linear interpolation to bring zoomScale much closer to distScale if it's less than it
@@ -580,10 +586,7 @@ def main():
         simulateTick(planets, focus, timeScale)
         distScale = zoom(distScale, zoomScale)
 
-        ## focusAdjustment makes it so that the screen follows whichever planet the user wants to look at
-        ## Alternatively, follows the centre of mass, useful for binary star systems
-        # focusAdjustment(planets, comFocus)
-        if comparison:
+        if comparison: ## if comparison is true 
             ## These rects get rid of old drawings, similar to doing screen.fill((0,0,0)) to refresh the display
             pygame.draw.rect(comparisonSurface1, 'black', (0, 0, centre[x]*2, centre[y]*2))
             pygame.draw.rect(comparisonSurface2, 'black', (0, 0, centre[x]*2, centre[y]*2))
@@ -596,8 +599,10 @@ def main():
             displayPlanetInfo(font, planets[planetsToCompare[0]], planets, 20, menuSurface2)
             displayPlanetInfo(font, planets[planetsToCompare[1]], planets, centre[x]*2-320, menuSurface2)
 
-        else:
-            adjustment = focusAdjustment(planets, focus, comFocus) # Calculate the adjustment so we can display planets
+        else: ## Display the solar system if not in comparison mode
+         ## focusAdjustment makes it so that the screen follows whichever planet the user wants to look at
+         ## Alternatively, follows the centre of mass, useful for binary star systems
+            adjustment = focusAdjustment(planets, focus, comFocus)
             displayPlanets(planets, adjustment, screen)
             displayLines(planets, adjustment, focus, comFocus, screen)
             if arrows:

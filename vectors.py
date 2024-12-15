@@ -1,3 +1,5 @@
+## Program title: Solar System Simulation by Archie Pennycook
+
 import math as maths
 import numpy as np
 x = 0
@@ -15,19 +17,20 @@ def mag(vec):
     mag = sum([i**2 for i in vec])
     return maths.sqrt(mag)
 
-## Returns a vector with the same direction as the input of length 1
+## Returns a vector of length 1 in the same direction as the input
 def unit(vec):
     if mag(vec) == 0:
         return vec
     return vec*(1/mag(vec))
 
-## Returns a direction vector (a vector of unit length 1 so it can easily be scaled) that is perpendicular to input line
-## By taking the "negative reciprocal", swapping the values and multiplying one of them by -1
+## Returns a vector that is perpendicular to input line
+## This vector must have a length of 1 so it can be easily scaled
+## Done by taking the "negative reciprocal", swapping the values and multiplying one of them by -1
 def normal(vec):
     normal = np.array([-1*vec[y],vec[x]])
     return unit(normal)
 
-## Main is just used for testing purposes
+## Main is just used for testing purposes, for test 02
 def main():
     print("DOT PRODUCT BETWEEN (-1,-2), (3,4):", dot(np.array([-1, -2]), np.array([3, 4])))
     print('---')
